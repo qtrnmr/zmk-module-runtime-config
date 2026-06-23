@@ -26,9 +26,27 @@ the custom RPC, and capacity options (`_MAX_STEPS`, `_SLOTS`, `_MAX`).
 1. Add to `west.yml`:
 
 ```yaml
-- name: zmk-module-runtime-config
-  url: https://github.com/qtrnmr/zmk-module-runtime-config
-  revision: main
+manifest:
+  remotes:
+    - name: cormoran
+      url-base: https://github.com/cormoran
+    - name: qtrnmr
+      url-base: https://github.com/qtrnmr
+  projects:
+    - name: zmk
+      remote: cormoran
+      revision: v0.3-branch+dya
+      import: app/west.yml
+    - name: zmk-module-runtime-config
+      remote: qtrnmr
+      revision: main
+    # optional companions (trackball / encoder):
+    - name: zmk-module-runtime-input-processor
+      remote: cormoran
+      revision: zmk-v0.3.0.0
+    - name: zmk-behavior-runtime-sensor-rotate
+      remote: cormoran
+      revision: zmk-v0.3.0.0
 ```
 
 2. Enable desired features in `<board>.conf`:
@@ -50,12 +68,21 @@ CONFIG_ZMK_RUNTIME_COMBOS_STUDIO_RPC=y
    - `zmk,runtime-conditional-layers`
    - `zmk,runtime-combos`
 
-4. Recommended Studio RPC buffer sizes:
+4. Required config — add to `<board>.conf`:
 
-```
+```conf
+# Studio + a transport (this example uses BLE; the central is built with the
+# studio-rpc-usb-uart snippet so the CLI can reach it over USB)
+CONFIG_ZMK_STUDIO=y
+# Enlarge RPC buffers — the default RX buffer silently drops larger custom-RPC
+# frames (worst-case macro/combo payloads):
 CONFIG_ZMK_STUDIO_RPC_RX_BUF_SIZE=1024
 CONFIG_ZMK_STUDIO_RPC_CUSTOM_SUBSYSTEM_REQUEST_PAYLOAD_MAX_BYTES=512
 ```
+
+> **Caveat:** keymap-drawer (≤0.23.0) cannot parse the `zmk,runtime-*`
+> compatibles and will drop the keymap drawing. The device-tree positions and
+> outputs are unchanged, so this is cosmetic.
 
 ## Related
 

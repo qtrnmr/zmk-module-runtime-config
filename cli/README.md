@@ -4,7 +4,7 @@ CLI for editing ZMK runtime-config features (macros, hold-tap, conditional layer
 
 ## Requirements
 
-Your keyboard must be flashed with firmware built using `zmk-module-runtime-config`. For trackball and encoder support, the cormoran companion modules (`zmk-cormoran-input-processor` for trackball, `zmk-cormoran-encoder` for encoder) must also be enabled.
+Your keyboard must be flashed with firmware built using `zmk-module-runtime-config`. For trackball support (`zmkrt trackball`), enable the cormoran module `zmk-module-runtime-input-processor`. For encoder support (`zmkrt encoder`), enable `zmk-behavior-runtime-sensor-rotate`. Both are from the `cormoran` remote, pinned to tag `zmk-v0.3.0.0`.
 
 ## Install
 
@@ -35,8 +35,8 @@ The `zmkrt` command provides the following command groups:
 - `holdtap` — Hold-tap list/set operations
 - `condlayer` — Conditional-layer list/add/delete/rename
 - `combo` — Combo list/add/edit/delete/rename
-- `encoder` — Encoder list/behaviors/set operations (requires `zmk-cormoran-encoder`)
-- `trackball` — Trackball config/snapping/scroll operations (requires `zmk-cormoran-input-processor`)
+- `encoder` — Encoder list/behaviors/set operations (requires `zmk-behavior-runtime-sensor-rotate`)
+- `trackball` — Trackball config/snapping/scroll operations (requires `zmk-module-runtime-input-processor`)
 - `reset` — Reset subsystem to defaults
 - `snapshot` — Lock/unlock Studio
 
