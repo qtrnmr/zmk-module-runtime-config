@@ -30,7 +30,7 @@ manifest:
   remotes:
     - name: cormoran
       url-base: https://github.com/cormoran
-    - name: qtrnmr
+    - name: qtrnmr          # the remote name is arbitrary — reference it in projects below
       url-base: https://github.com/qtrnmr
   projects:
     - name: zmk
@@ -71,8 +71,9 @@ CONFIG_ZMK_RUNTIME_COMBOS_STUDIO_RPC=y
 4. Required config — add to `<board>.conf`:
 
 ```conf
-# Studio + a transport (this example uses BLE; the central is built with the
-# studio-rpc-usb-uart snippet so the CLI can reach it over USB)
+# Studio must be enabled. The CLI reaches the keyboard over a USB-serial Studio
+# endpoint, so build the central with the studio-rpc-usb-uart snippet. (The
+# keyboard's own host transport — BLE and/or USB HID — is independent of this.)
 CONFIG_ZMK_STUDIO=y
 # Enlarge RPC buffers — the default RX buffer silently drops larger custom-RPC
 # frames (worst-case macro/combo payloads):
