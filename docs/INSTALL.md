@@ -178,9 +178,9 @@ zmkrt --port /dev/tty.usbmodem* info
 
 ```bash
 zmkrt combo list          # list all runtime combos
-zmkrt macro list          # list all runtime macros
+zmkrt macro get 0         # get macro in slot 0 (macros are addressed by slot number, 0-based; there is no macro list)
 zmkrt holdtap list        # list all runtime hold-tap behaviors
-zmkrt condlayers list     # list all runtime conditional layers
+zmkrt condlayer list      # list all runtime conditional layers
 ```
 
 For the full command reference run `zmkrt --help` or `zmkrt <subcommand> --help`.
@@ -211,10 +211,13 @@ defaults:
 
 ```bash
 zmkrt combo reset
-zmkrt macro reset
 zmkrt holdtap reset
-zmkrt condlayers reset
+zmkrt condlayer reset
 ```
+
+> **Note:** Macros have no per-slot reset — set the slot to an empty macro, or
+> use the global `zmkrt reset` (below) to restore all settings to the
+> devicetree defaults.
 
 To clear all runtime state at once:
 
