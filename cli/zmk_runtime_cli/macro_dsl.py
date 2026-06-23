@@ -38,6 +38,21 @@ _MOD_BITS = {
 
 _LSHIFT_BIT = 2 << 24
 
+# Macro step types (mirror RT_MACRO_STEP_* in firmware include/zmk/runtime_macro.h)
+STEP_TAP = 0
+STEP_PRESS = 1
+STEP_RELEASE = 2
+
+# Named keys — full ZMK page encoding (verbatim from ZMK keys.h).
+# Consumer page = 0x0C<<16 | id; Keyboard page = 0x07<<16 | id.
+_NAMED: dict[str, int] = {
+    "GLOBE": 0x0C029D,
+    "LEFT": 0x070050,
+    "RIGHT": 0x07004F,
+    "UP": 0x070052,
+    "DOWN": 0x070051,
+}
+
 MAX_STEPS = 32
 
 
@@ -73,6 +88,21 @@ def _parse_modified_key(token: str) -> dict:
     return _make_step(mods | usage)
 
 
+def _resolve_key(token: str) -> int:
+    """Resolve a single key spec to a ZMK keycode.
+    Order: named table -> C-S-x mod form -> single char -> raw 0x../decimal."""
+    if token in _NAMED:
+        return _NAMED[token]
+    if "-" in token and token[0] in _MOD_BITS:
+        return _parse_modified_key(token)["keycode"]
+    if len(token) == 1:
+        return _char_to_keycode(token)
+    try:
+        return int(token, 0)  # 0x.. or decimal
+    except ValueError:
+        raise ValueError(f"Unknown key: {token!r}")
+
+
 def parse(s: str) -> list[dict]:
     """Parse a macro DSL string into a list of step dicts."""
     tokens = [t.strip() for t in s.split("|")]
@@ -99,6 +129,16 @@ def parse(s: str) -> list[dict]:
                 raise ValueError("'wait' with no preceding step")
             ms = int(parts[1])
             steps[-1]["wait_ms"] += ms
+
+        elif head in ("press", "release", "tap"):
+            if len(parts) < 2:
+                raise ValueError(f"{head!r} requires a key argument")
+            keycode = _resolve_key(parts[1].strip())
+            step_type = {"press": STEP_PRESS, "release": STEP_RELEASE,
+                         "tap": STEP_TAP}[head]
+            step = _make_step(keycode)
+            step["type"] = step_type
+            steps.append(step)
 
         elif "-" in head and head[0] in _MOD_BITS:
             # modifier-prefixed key token
