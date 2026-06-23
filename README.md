@@ -3,6 +3,11 @@
 A unified ZMK module that makes macros, hold-tap timing, conditional layers, and
 combos **runtime-editable over the custom Studio RPC — without reflashing**.
 
+## Getting started
+- **Install guide:** [docs/INSTALL.md](docs/INSTALL.md) — zero → working.
+- **Examples:** [examples/](examples/) — copyable keymap fragments + CLI commands per feature.
+- **CLI:** [cli/README.md](cli/README.md).
+
 ## Requirement (non-mainline ZMK)
 
 **This module requires a ZMK base that provides the custom Studio RPC layer**
