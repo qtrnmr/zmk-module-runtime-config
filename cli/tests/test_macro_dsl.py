@@ -55,3 +55,23 @@ def test_press_release_tap_types():
 def test_tap_single_char():
     s = parse("tap c")[0]
     assert s["type"] == 0 and s["keycode"] == 0x06
+
+
+def test_balanced_chord_ok():
+    # no exception
+    parse("press GLOBE | tap LEFT | release GLOBE")
+
+
+def test_unmatched_press_raises():
+    with pytest.raises(ValueError, match="unbalanced"):
+        parse("press GLOBE | tap LEFT")
+
+
+def test_orphan_release_raises():
+    with pytest.raises(ValueError, match="unbalanced"):
+        parse("release GLOBE")
+
+
+def test_allow_unbalanced_bypasses():
+    steps = parse("press GLOBE", allow_unbalanced=True)
+    assert steps[0]["type"] == 1

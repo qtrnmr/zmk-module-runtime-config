@@ -103,7 +103,7 @@ def _resolve_key(token: str) -> int:
         raise ValueError(f"Unknown key: {token!r}")
 
 
-def parse(s: str) -> list[dict]:
+def parse(s: str, allow_unbalanced: bool = False) -> list[dict]:
     """Parse a macro DSL string into a list of step dicts."""
     tokens = [t.strip() for t in s.split("|")]
     steps: list[dict] = []
@@ -146,6 +146,24 @@ def parse(s: str) -> list[dict]:
 
         else:
             raise ValueError(f"Unknown DSL token: {head!r}")
+
+    if not allow_unbalanced:
+        open_counts: dict[int, int] = {}
+        for st in steps:
+            if st["type"] == STEP_PRESS:
+                open_counts[st["keycode"]] = open_counts.get(st["keycode"], 0) + 1
+            elif st["type"] == STEP_RELEASE:
+                if open_counts.get(st["keycode"], 0) == 0:
+                    raise ValueError(
+                        f"unbalanced macro: release of 0x{st['keycode']:X} "
+                        "with no matching press (use --allow-unbalanced to override)")
+                open_counts[st["keycode"]] -= 1
+        leftover = [k for k, v in open_counts.items() if v > 0]
+        if leftover:
+            raise ValueError(
+                "unbalanced macro: press without release for "
+                + ", ".join(f"0x{k:X}" for k in leftover)
+                + " (use --allow-unbalanced to override)")
 
     if len(steps) > MAX_STEPS:
         raise ValueError(f"macro has {len(steps)} steps; max is {MAX_STEPS}")

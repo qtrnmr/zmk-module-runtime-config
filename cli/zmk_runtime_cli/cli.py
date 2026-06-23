@@ -67,7 +67,7 @@ def cmd_macro_get(args: argparse.Namespace) -> int:
 
 def cmd_macro_set(args: argparse.Namespace) -> int:
     from .macro_client import MacroClient
-    steps = macro_dsl.parse(args.dsl)
+    steps = macro_dsl.parse(args.dsl, allow_unbalanced=args.allow_unbalanced)
     # backup: read current state first
     with MacroClient(args.port) as client:
         try:
@@ -367,6 +367,8 @@ def build_parser() -> argparse.ArgumentParser:
     ms_p = macro.add_parser("set", help="Set macro from DSL string")
     ms_p.add_argument("slot", type=int)
     ms_p.add_argument("dsl", help='e.g. "type hello | wait 50 | C-c"')
+    ms_p.add_argument("--allow-unbalanced", action="store_true",
+                      help="skip press/release balance validation")
     ms_p.set_defaults(func=cmd_macro_set)
     layer = sub.add_parser("layer", help="Layer management (Studio native)").add_subparsers(
         dest="layer_cmd", required=True)
