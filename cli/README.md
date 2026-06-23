@@ -29,16 +29,16 @@ The PyPI build of `zmk-studio-api` may lack serial/BLE support on some platforms
 The `zmkrt` command provides the following command groups:
 
 - `info` — Show device/lock/keymap summary
-- `key` — Per-key get/set operations
-- `layer` — Layer list/rename operations
-- `macro` — Macro list/add/edit/delete/rename
-- `holdtap` — Hold-tap list/set operations
-- `condlayer` — Conditional-layer list/add/delete/rename
-- `combo` — Combo list/add/edit/delete/rename
-- `encoder` — Encoder list/behaviors/set operations (requires `zmk-behavior-runtime-sensor-rotate`)
-- `trackball` — Trackball config/snapping/scroll operations (requires `zmk-module-runtime-input-processor`)
-- `reset` — Reset subsystem to defaults
-- `snapshot` — Lock/unlock Studio
+- `key` — Per-key get/set operations (`get <layer> <position>` ; `set <layer> <position> "<behavior>"`)
+- `layer` — Layer management: `list` / `rename` / `add` / `remove` / `move` / `restore`
+- `macro` — Runtime macro get/set: `get <slot>` ; `set <slot> "<dsl>"` (DSL steps separated by `|`, e.g. `"type hi | wait 200 | C-S-z"`)
+- `holdtap` — Hold-tap timing: `list` / `get` / `set` / `reset`
+- `condlayer` — Conditional-layer entries: `list` / `get` / `set` / `reset`
+- `combo` — Combo management: `list` / `get` / `set` / `reset`
+- `encoder` — Encoder bindings: `sensors` / `get` / `set` / `reset` / `behaviors` (requires `zmk-behavior-runtime-sensor-rotate`)
+- `trackball` — Trackball config: `get` / `set` / `reset` (requires `zmk-module-runtime-input-processor`)
+- `reset` — Reset all settings to devicetree defaults
+- `snapshot [path]` — Save raw keymap bytes to a file (record-only; not a lock/unlock operation)
 
 ### Port detection
 
@@ -50,20 +50,20 @@ The CLI auto-detects the keyboard's USB serial port (e.g., `/dev/cu.usbmodem*` o
 # Show device info
 zmkrt info
 
-# List macros
-zmkrt macro list
+# Get macro at slot 0
+zmkrt macro get 0
 
-# Add a macro
-zmkrt macro add my_macro 'hello world'
+# Set macro at slot 0 using DSL
+zmkrt macro set 0 "type hello | wait 50 | C-c"
 
-# Set a key binding
-zmkrt key set 0 1 2 kp A
+# Set a key binding (layer 0, position 1, behavior as one quoted arg)
+zmkrt key set 0 1 "KP A"
 
-# List hold-tap settings
+# List hold-tap slots
 zmkrt holdtap list
 
-# Lock Studio (disable GUI editing)
-zmkrt snapshot lock
+# Save a raw keymap snapshot (record-only)
+zmkrt snapshot mykeymap.bin
 ```
 
 ## Development
