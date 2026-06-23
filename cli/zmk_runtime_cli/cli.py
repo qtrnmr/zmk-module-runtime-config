@@ -23,7 +23,7 @@ def _emit(obj: dict) -> None:
     print(json.dumps(obj, ensure_ascii=False))
 
 
-BACKUP_LOG = Path(__file__).resolve().parent.parent / ".roba-backup.jsonl"
+BACKUP_LOG = Path(__file__).resolve().parent.parent / ".zmkrt-backup.jsonl"
 
 
 def _append_backup(entry: dict) -> None:
@@ -344,9 +344,9 @@ def cmd_combo_reset(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="roba")
+    parser = argparse.ArgumentParser(prog="zmkrt")
     parser.add_argument("--port", default=None,
-                        help="roBa USB serial port (default: auto-detect /dev/cu.usbmodem*)")
+                        help="Keyboard USB serial port (default: auto-detect /dev/cu.usbmodem*)")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("info", help="Show device/lock/keymap summary").set_defaults(func=cmd_info)
     key = sub.add_parser("key", help="Per-key get/set").add_subparsers(dest="key_cmd", required=True)

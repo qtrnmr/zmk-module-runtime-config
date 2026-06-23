@@ -1,13 +1,14 @@
 [project]
-name = "roba-cli"
-version = "0.0.1"
+name = "zmk-runtime-cli"
+version = "0.1.0"
+description = "Edit ZMK runtime-config features (macros/hold-tap/conditional-layers/combos/trackball/encoder) over the custom Studio RPC, without reflashing."
 requires-python = ">=3.11"
-# PyPI 0.3.1 は macOS で serial/BLE 無効のため fallback 扱い。
-# 実動作には README セットアップ手順の source ビルド(0.4.0系)を使うこと。
-dependencies = ["zmk-studio-api==0.3.1", "pyserial"]
+# zmk-studio-api: the PyPI build may lack serial/BLE on some platforms; see README
+# for the source-build instructions used during development.
+dependencies = ["zmk-studio-api", "pyserial"]
 
 [project.scripts]
-roba = "zmk_runtime_cli.cli:run"
+zmkrt = "zmk_runtime_cli.cli:run"
 
 [project.optional-dependencies]
 dev = ["pytest"]

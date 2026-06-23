@@ -89,5 +89,5 @@ def resolve_local_id(behaviors_list: list[dict], token: str) -> int:
         if cand in {b["id"] for b in behaviors_list}:
             return cand
     raise BehaviorResolutionError(
-        f"could not resolve '{token}'. Use 'roba encoder behaviors' to list ids "
+        f"could not resolve '{token}'. Use 'zmkrt encoder behaviors' to list ids "
         f"and pass 'raw <id> <param1> [param2]'.")

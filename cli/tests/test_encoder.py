@@ -140,7 +140,7 @@ def test_sensors_decodes_over_custom_envelope():
 
 
 def test_resolve_behavior_local_id_by_display_name():
-    # settings-table mode (real roBa): crc16 ids absent; resolve by display_name.
+    # settings-table mode (real keyboard): crc16 ids absent; resolve by display_name.
     # kp -> friendly "Key Press"; msc -> node-name fallback "mouse_scroll".
     c = ec.EncoderClient(_ser=_FakeSerial(b""))
     c._index = 0
