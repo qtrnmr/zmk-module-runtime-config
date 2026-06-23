@@ -1,0 +1,5 @@
+# Nanopb options for macros.proto
+# Cap repeated fields to avoid dynamic allocation on embedded target
+
+zmk.macros.GetMacroResponse.steps  max_count:32
+zmk.macros.SetMacroRequest.steps   max_count:32

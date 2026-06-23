@@ -1,0 +1,85 @@
+menu "ZMK Runtime Config (runtime-editable features over custom Studio RPC)"
+
+config ZMK_RUNTIME_MACRO
+    bool "Enable runtime-editable macro"
+
+if ZMK_RUNTIME_MACRO
+
+config ZMK_RUNTIME_MACRO_STUDIO_RPC
+    bool "Expose runtime macro editing over ZMK Studio custom RPC"
+    depends on ZMK_STUDIO
+    default y
+
+config ZMK_RUNTIME_MACRO_MAX_STEPS
+    int "Maximum steps per macro"
+    default 32
+
+config ZMK_RUNTIME_MACRO_SLOTS
+    int "Number of runtime macro slots"
+    default 1
+
+endif
+
+config ZMK_RUNTIME_HOLDTAP
+    bool "Enable runtime-editable hold-tap timing"
+    help
+      Provides a zmk,behavior-runtime-hold-tap behavior — a verbatim fork of
+      ZMK's hold-tap whose tapping-term-ms / quick-tap-ms / require-prior-idle-ms
+      / flavor are stored in NVS and editable at runtime over a custom Studio RPC,
+      without reflashing firmware.
+
+if ZMK_RUNTIME_HOLDTAP
+
+config ZMK_RUNTIME_HOLDTAP_STUDIO_RPC
+    bool "Enable hold-tap timing custom Studio RPC (zmk__holdtap)"
+    depends on ZMK_STUDIO
+    default y
+
+config ZMK_RUNTIME_HOLDTAP_SLOTS
+    int "Max runtime hold-tap slots"
+    default 8
+
+endif
+
+config ZMK_RUNTIME_CONDLAYERS
+    bool "Enable runtime-editable conditional layers"
+    help
+      Provides zmk,runtime-conditional-layers — a verbatim fork of ZMK's
+      conditional_layer subsystem whose {if-layers, then-layer} entries are
+      stored in NVS and editable at runtime over a custom Studio RPC, without
+      reflashing firmware.
+
+if ZMK_RUNTIME_CONDLAYERS
+
+config ZMK_RUNTIME_CONDLAYERS_STUDIO_RPC
+    bool "Enable conditional-layers custom Studio RPC (zmk__condlayers)"
+    depends on ZMK_STUDIO
+    default y
+
+config ZMK_RUNTIME_CONDLAYERS_MAX
+    int "Max runtime conditional-layer entries"
+    default 16
+
+endif
+
+config ZMK_RUNTIME_COMBOS
+    bool "Enable runtime-editable combos"
+    help
+      Provides zmk,runtime-combos — a verbatim fork of ZMK's combo subsystem;
+      binding/timeout/layers/require-prior-idle/slow-release editable over
+      zmk__combos, key-positions fixed.
+
+if ZMK_RUNTIME_COMBOS
+
+config ZMK_RUNTIME_COMBOS_STUDIO_RPC
+    bool "Enable combos custom Studio RPC (zmk__combos)"
+    depends on ZMK_STUDIO
+    default y
+
+config ZMK_RUNTIME_COMBOS_MAX
+    int "Max runtime combo entries"
+    default 16
+
+endif
+
+endmenu
