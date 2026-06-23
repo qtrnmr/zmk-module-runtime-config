@@ -346,7 +346,7 @@ def cmd_combo_reset(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="zmkrt")
     parser.add_argument("--port", default=None,
-                        help="Keyboard USB serial port (default: auto-detect /dev/cu.usbmodem*)")
+                        help="Keyboard USB serial port (default: auto-detect)")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("info", help="Show device/lock/keymap summary").set_defaults(func=cmd_info)
     key = sub.add_parser("key", help="Per-key get/set").add_subparsers(dest="key_cmd", required=True)
