@@ -1,14 +1,14 @@
 """Shared ZMK Studio serial transport (framing + request/response loop).
 
 Wire format: SOF=0xAB, ESC=0xAC, EOF=0xAD, no XOR (see framing.py). Used by all
-roba-cli clients that talk the Studio RPC directly over USB serial.
+zmk-runtime-cli clients that talk the Studio RPC directly over USB serial.
 """
 from __future__ import annotations
 
-import glob
 import time
 
 import serial
+from serial.tools import list_ports
 
 import zmk_runtime_cli.proto  # noqa: F401  sets sys.path for proto imports
 import studio_pb2
@@ -18,18 +18,25 @@ from .framing import encode_frame, decode_frame
 SOF = 0xAB
 ESC = 0xAC
 EOF = 0xAD
-PORT_GLOB = "/dev/cu.usbmodem*"
 DEFAULT_BAUD = 115200
 READ_TIMEOUT = 2.0
 CHUNK = 256
 
 
+def _is_usb_serial(p) -> bool:
+    """True if the port looks like a USB CDC-ACM serial device (any OS)."""
+    if getattr(p, "vid", None) is not None:
+        return True
+    hwid = (getattr(p, "hwid", "") or "").upper()
+    return "USB" in hwid
+
+
 def find_port() -> str:
-    ports = sorted(glob.glob(PORT_GLOB))
-    if len(ports) == 1:
-        return ports[0]
+    cands = [p.device for p in list_ports.comports() if _is_usb_serial(p)]
+    if len(cands) == 1:
+        return cands[0]
     raise RuntimeError(
-        f"roBa serial port not uniquely found. candidates={ports}. "
+        f"keyboard serial port not uniquely found. candidates={sorted(cands)}. "
         "Pass --port explicitly."
     )
 
