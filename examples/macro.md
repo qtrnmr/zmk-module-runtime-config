@@ -23,3 +23,21 @@ zmkrt macro get 0
 ```
 Slots: `CONFIG_ZMK_RUNTIME_MACRO_SLOTS` (default 1), steps per macro:
 `CONFIG_ZMK_RUNTIME_MACRO_MAX_STEPS` (default 32).
+
+### Held chords (press / release)
+
+`press <key>` holds a key down; `release <key>` lets it up; `tap <key>` is a
+single press+release. Use these to build chords where one key stays held while
+another is tapped — e.g. iOS/iPadOS Globe (🌐) shortcuts:
+
+```bash
+zmkrt macro set 0 "press GLOBE | tap LEFT | release GLOBE"    # switch app left
+zmkrt macro set 0 "press GLOBE | tap RIGHT | release GLOBE"   # switch app right
+zmkrt macro set 0 "press GLOBE | tap UP | release GLOBE"      # App Switcher
+zmkrt macro set 0 "press GLOBE | tap c | release GLOBE"       # Control Center (Globe+C)
+```
+
+Named keys: `GLOBE`, `LEFT`, `RIGHT`, `UP`, `DOWN` (plus single characters,
+`C-S-x` modifier forms, and raw `0x..`/decimal keycodes). Every `press` must
+have a matching `release`; the CLI rejects an unbalanced macro unless you pass
+`--allow-unbalanced`.
