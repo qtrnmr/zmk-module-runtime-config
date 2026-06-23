@@ -4,10 +4,12 @@
 #pragma once
 #include <zephyr/types.h>
 
-#define RT_MACRO_STEP_KEY 0
+#define RT_MACRO_STEP_TAP     0  // press+release (was RT_MACRO_STEP_KEY; value unchanged)
+#define RT_MACRO_STEP_PRESS   1  // press only — key stays down
+#define RT_MACRO_STEP_RELEASE 2  // release only
 
 struct rt_macro_step {
-    uint8_t type;       // RT_MACRO_STEP_KEY
+    uint8_t type;       // RT_MACRO_STEP_TAP / _PRESS / _RELEASE
     uint32_t keycode;   // ZMK-encoded keycode incl. implicit mods (e.g. LC(C)=0x01000006). Passed to &kp param1.
     uint16_t wait_ms;
     uint16_t tap_ms;

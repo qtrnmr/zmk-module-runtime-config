@@ -9,14 +9,6 @@
 #include <zmk/runtime_macro.h>
 #include <dt-bindings/zmk/keys.h>
 
-static void queue_key_tap(struct zmk_behavior_binding_event event, uint32_t keycode,
-                          uint16_t tap_ms, uint16_t wait_ms) {
-    struct zmk_behavior_binding kp = { .behavior_dev = "key_press",
-                                       .param1 = keycode, .param2 = 0 };
-    zmk_behavior_queue_add(&event, kp, true, tap_ms);
-    zmk_behavior_queue_add(&event, kp, false, wait_ms);
-}
-
 static int on_rt_macro_pressed(struct zmk_behavior_binding *binding,
                                struct zmk_behavior_binding_event event) {
     struct rt_macro_step steps[CONFIG_ZMK_RUNTIME_MACRO_MAX_STEPS];
@@ -26,7 +18,21 @@ static int on_rt_macro_pressed(struct zmk_behavior_binding *binding,
         return ZMK_BEHAVIOR_OPAQUE;
     }
     for (uint8_t i = 0; i < count; i++) {
-        queue_key_tap(event, steps[i].keycode, steps[i].tap_ms, steps[i].wait_ms);
+        struct zmk_behavior_binding kp = { .behavior_dev = "key_press",
+                                           .param1 = steps[i].keycode, .param2 = 0 };
+        switch (steps[i].type) {
+        case RT_MACRO_STEP_PRESS:
+            zmk_behavior_queue_add(&event, kp, true, steps[i].wait_ms);
+            break;
+        case RT_MACRO_STEP_RELEASE:
+            zmk_behavior_queue_add(&event, kp, false, steps[i].wait_ms);
+            break;
+        case RT_MACRO_STEP_TAP:
+        default:
+            zmk_behavior_queue_add(&event, kp, true, steps[i].tap_ms);
+            zmk_behavior_queue_add(&event, kp, false, steps[i].wait_ms);
+            break;
+        }
     }
     return ZMK_BEHAVIOR_OPAQUE;
 }
