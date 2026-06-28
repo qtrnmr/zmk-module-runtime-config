@@ -3,6 +3,7 @@
 
 #define DT_DRV_COMPAT zmk_behavior_runtime_macro
 #include <zephyr/device.h>
+#include <zephyr/sys/util.h>
 #include <drivers/behavior.h>
 #include <zmk/behavior.h>
 #include <zmk/behavior_queue.h>
@@ -42,9 +43,35 @@ static int on_rt_macro_released(struct zmk_behavior_binding *binding,
     return ZMK_BEHAVIOR_OPAQUE;
 }
 
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
+// Publish param metadata so ZMK Studio's set_layer_binding accepts assigning
+// &rt_macro at runtime. param1 = slot index, a range [0, SLOTS-1]; param2 is
+// unused (left empty, so validation only accepts param2 == 0). Without this the
+// behavior reports no metadata and Studio rejects every binding as
+// INVALID_PARAMETERS — the reason rt_macro placement was DTS-only until now.
+static const struct behavior_parameter_value_metadata rt_macro_param1_values[] = {
+    {
+        .display_name = "Slot",
+        .range = {.min = 0, .max = CONFIG_ZMK_RUNTIME_MACRO_SLOTS - 1},
+        .type = BEHAVIOR_PARAMETER_VALUE_TYPE_RANGE,
+    },
+};
+static const struct behavior_parameter_metadata_set rt_macro_metadata_set = {
+    .param1_values_len = ARRAY_SIZE(rt_macro_param1_values),
+    .param1_values = rt_macro_param1_values,
+};
+static const struct behavior_parameter_metadata rt_macro_metadata = {
+    .sets_len = 1,
+    .sets = &rt_macro_metadata_set,
+};
+#endif // IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
+
 static const struct behavior_driver_api rt_macro_api = {
     .binding_pressed = on_rt_macro_pressed,
     .binding_released = on_rt_macro_released,
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
+    .parameter_metadata = &rt_macro_metadata,
+#endif // IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
 };
 
 static int rt_macro_init(const struct device *dev) { return 0; }
