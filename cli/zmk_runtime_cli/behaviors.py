@@ -68,6 +68,10 @@ def parse_behavior(spec: str) -> BehaviorSpec:
         if len(rest) != 3:
             raise ValueError("RAW requires behavior_id param1 param2")
         return BehaviorSpec("Raw", (int(rest[0]), int(rest[1]), int(rest[2])))
+    if head in ("RT_MACRO", "RTMACRO"):
+        if len(rest) != 1:
+            raise ValueError("RT_MACRO requires one slot index, e.g. 'rt_macro 1'")
+        return BehaviorSpec("RtMacro", (int(rest[0]),))
     raise ValueError(f"unknown behavior: {spec!r}")
 
 

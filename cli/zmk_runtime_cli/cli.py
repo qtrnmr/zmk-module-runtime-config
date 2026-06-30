@@ -40,6 +40,19 @@ def cmd_key_get(args: argparse.Namespace) -> int:
     return 0
 
 
+def _resolve_behavior_id(client, display_name: str) -> int:
+    """Resolve a behavior's local_id from the device by its Studio display_name.
+    Custom behaviors (e.g. rt_macro) aren't known to zmk_studio_api's typed
+    constructors, so we look up the live id and send it via Raw."""
+    import behaviors_pb2 as bpb
+    for i in client.list_all_behaviors():
+        details = bpb.GetBehaviorDetailsResponse()
+        details.ParseFromString(bytes(client.get_behavior_details_bytes(int(i))))
+        if details.display_name == display_name:
+            return int(i)
+    raise ValueError(f"behavior {display_name!r} not found on device")
+
+
 def cmd_key_set(args: argparse.Namespace) -> int:
     import zmk_studio_api as zmk
     client = connection.open(args.port)
@@ -48,7 +61,14 @@ def cmd_key_set(args: argparse.Namespace) -> int:
                     "before_kind": before.kind, "before_repr": repr(before),
                     "new": args.behavior})
     spec = behaviors.parse_behavior(args.behavior)
-    client.set_key_at(args.layer, args.position, behaviors.build_behavior(spec, zmk))
+    if spec.kind == "RtMacro":
+        # rt_macro is a custom behavior: resolve its live id and assign via Raw
+        # (param1 = slot, param2 = 0). Requires the firmware's param metadata.
+        beh_id = _resolve_behavior_id(client, "rt_macro")
+        behavior = zmk.Raw(beh_id, spec.args[0], 0)
+    else:
+        behavior = behaviors.build_behavior(spec, zmk)
+    client.set_key_at(args.layer, args.position, behavior)
     client.save_changes()
     after = client.get_key_at(args.layer, args.position)
     _emit({"layer": args.layer, "position": args.position,
@@ -357,7 +377,7 @@ def build_parser() -> argparse.ArgumentParser:
     ks = key.add_parser("set")
     ks.add_argument("layer", type=int)
     ks.add_argument("position", type=int)
-    ks.add_argument("behavior", help="e.g. 'KP B', 'trans', 'MO 5'")
+    ks.add_argument("behavior", help="e.g. 'KP B', 'KP LG(TAB)', 'trans', 'MO 5', 'rt_macro 1'")
     ks.set_defaults(func=cmd_key_set)
     macro = sub.add_parser("macro", help="Runtime macro get/set").add_subparsers(
         dest="macro_cmd", required=True)

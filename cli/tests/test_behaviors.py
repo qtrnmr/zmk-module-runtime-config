@@ -31,6 +31,15 @@ def test_raw():
     assert parse_behavior("RAW 12 1 0") == BehaviorSpec("Raw", (12, 1, 0))
 
 
+def test_rt_macro():
+    assert parse_behavior("rt_macro 1") == BehaviorSpec("RtMacro", (1,))
+
+
+def test_rt_macro_arity_error():
+    with pytest.raises(ValueError):
+        parse_behavior("rt_macro")
+
+
 def test_unknown_raises():
     with pytest.raises(ValueError):
         parse_behavior("WAT 1")
