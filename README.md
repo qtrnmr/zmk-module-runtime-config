@@ -7,6 +7,9 @@ combos **runtime-editable over the custom Studio RPC — without reflashing**.
 - **Install guide:** [docs/INSTALL.md](docs/INSTALL.md) — zero → working.
 - **Examples:** [examples/](examples/) — copyable keymap fragments + CLI commands per feature.
 - **CLI:** [cli/README.md](cli/README.md).
+- **Browser UI:** `zmkrt ui` serves a local page that renders the live keymap on the
+  keyboard's real physical layout and edits key bindings and layers — see
+  [cli/README.md#browser-ui](cli/README.md#browser-ui).
 
 ## Requirement (non-mainline ZMK)
 
