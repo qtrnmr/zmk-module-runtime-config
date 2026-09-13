@@ -7,7 +7,9 @@ import KeyEditor from "./components/KeyEditor";
 import LayerSidebar, { type RemovedLayer } from "./components/LayerSidebar";
 import Toast from "./components/Toast";
 import TopBar from "./components/TopBar";
+import ComboPanel from "./panels/ComboPanel";
 import CondlayerPanel from "./panels/CondlayerPanel";
+import EncoderPanel from "./panels/EncoderPanel";
 import HoldtapPanel from "./panels/HoldtapPanel";
 import MacroPanel from "./panels/MacroPanel";
 import type { Features, Layer, State, Tab } from "./types";
@@ -220,6 +222,10 @@ function FeaturePanel({
       return <HoldtapPanel {...props} />;
     case "condlayer":
       return <CondlayerPanel {...props} />;
+    case "combo":
+      return <ComboPanel {...props} />;
+    case "encoder":
+      return <EncoderPanel {...props} />;
     default:
       return (
         <div className="min-h-0 overflow-y-auto p-4 text-sm text-zinc-400">

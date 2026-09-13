@@ -1,5 +1,18 @@
 import type { ReactNode } from "react";
-import type { Unavailable } from "../types";
+import { pretty } from "../prettyKeycode";
+import type { Label, Unavailable } from "../types";
+
+/** Render a server binding label (single text, or hold/tap pair). */
+export function LabelText({ label }: { label?: Label }) {
+  if (!label) return <span className="text-zinc-500">—</span>;
+  const text = "text" in label ? pretty(label.text) : `${pretty(label.hold)} / ${pretty(label.tap)}`;
+  return (
+    <span>
+      <span className="text-zinc-100">{text}</span>
+      <span className="ml-2 text-xs text-zinc-500">{label.behavior}</span>
+    </span>
+  );
+}
 
 /** Shell every feature panel shares: heading, optional note, scroll container. */
 export function Panel({
