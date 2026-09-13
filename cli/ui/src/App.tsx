@@ -159,7 +159,7 @@ export default function App() {
         )}
 
         {tab === "keymap" ? (
-          <div className="grid min-h-0 grid-rows-[auto_1fr]">
+          <div className="grid min-h-0 grid-cols-[auto_1fr]">
             <LayerChips
               layers={state.keymap.layers}
               current={layer.index}
