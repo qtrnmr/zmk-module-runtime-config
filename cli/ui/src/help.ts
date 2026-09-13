@@ -59,7 +59,7 @@ export const BEHAVIOR_HELP: Record<string, string> = {
   rt_macro:
     "ランタイムマクロ (&rt_macro)。パラメータのスロット番号に保存したキー列を再生する。中身は「マクロ」ページで書き換えられる。",
   rsr_trans:
-    "runtime sensor-rotate モジュールが用意する透過インスタンス。回転に何も割り当てず、下のレイヤーの sensor-bindings に委ねる。",
+    "runtime sensor-rotate モジュールの dtsi が用意する透過インスタンス。回転に固有の動作を持たない土台で、cw/ccw はこの UI から書き込む (モジュール README 未確認: dtsi が「transparent」と説明しているところまでが確実)。",
 
   // --- roBa (config/roBa.keymap) ---
   ENCODER_MSC_DOWN_UP:
@@ -284,14 +284,18 @@ export const TRACKBALL_HELP: Record<string, FieldHelp> = {
     help: "上下の動きを逆向きにする。",
     group: TB_INVERT,
   },
+  // The module README documents neither of the next two; the wording below
+  // follows ZMK's stock processors of the same name (zip_xy_swap_mapper,
+  // zip_xy_to_scroll_mapper), which its own example chains in front of this
+  // processor. Treat as unconfirmed against the module source.
   "xy-swap": {
     label: "X と Y を入れ替え",
-    help: "X 軸と Y 軸の入力を入れ替える。センサーを 90 度回して実装した場合に使う。",
+    help: "X 軸と Y 軸の入力を入れ替える (ZMK の zip_xy_swap_mapper と同じ働きと思われる。モジュール README に記載なし)。",
     group: TB_INVERT,
   },
   "xy-to-scroll": {
     label: "移動をスクロールに変換",
-    help: "ポインタ移動をホイールスクロールとして出力する。",
+    help: "ポインタ移動をホイールスクロールとして出力する (ZMK の zip_xy_to_scroll_mapper と同じ働きと思われる。モジュール README に記載なし)。",
     group: TB_INVERT,
   },
   "axis-snap-mode": {
