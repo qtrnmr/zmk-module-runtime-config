@@ -603,4 +603,23 @@ int rt_combo_key_positions(uint8_t index, int32_t *out, uint8_t max, uint8_t *le
     return 0;
 }
 
+int rt_combo_dt_binding(uint8_t index, struct rt_combo_params *out) {
+    if (index >= ARRAY_SIZE(combos) || out == NULL) {
+        return -EINVAL;
+    }
+    // Resolve from the name, not from behavior.local_id: in settings-table
+    // local-id mode the const DT binding carries a name but local_id 0.
+    const struct zmk_behavior_binding *b = &combos[index].behavior;
+    zmk_behavior_local_id_t id = zmk_behavior_get_local_id(b->behavior_dev);
+    if (id == UINT16_MAX) {
+        return -ENODEV;
+    }
+    *out = (struct rt_combo_params){
+        .behavior_local_id = id,
+        .param1 = b->param1,
+        .param2 = b->param2,
+    };
+    return 0;
+}
+
 #endif

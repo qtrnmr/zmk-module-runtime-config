@@ -66,6 +66,16 @@ static void handle_get(const zmk_combos_GetRequest *req, zmk_combos_Response *re
         info->require_prior_idle_ms = p.require_prior_idle_ms;
         info->layer_mask = p.layer_mask;
         info->slow_release = p.slow_release;
+
+        // Also report the devicetree binding so the host can tell what an
+        // untouched combo (binding.behavior_id == 0) actually does.
+        struct rt_combo_params dt;
+        if (rt_combo_dt_binding(idx, &dt) == 0) {
+            info->has_dt_binding = true;
+            info->dt_binding.behavior_id = dt.behavior_local_id;
+            info->dt_binding.param1 = dt.param1;
+            info->dt_binding.param2 = dt.param2;
+        }
     }
 
     resp->which_response_type = zmk_combos_Response_get_tag;

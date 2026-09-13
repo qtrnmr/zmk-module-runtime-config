@@ -17,6 +17,10 @@ message ComboInfo {
     uint32 layer_mask = 6;
     bool slow_release = 7;
     bool found = 8;
+    // The devicetree (const) binding resolved to a local id, set whenever
+    // found. `binding` above keeps its meaning: behavior_id 0 = never
+    // overridden at runtime, in which case this is what the combo does.
+    Binding dt_binding = 9;
 }
 
 message CountRequest {}

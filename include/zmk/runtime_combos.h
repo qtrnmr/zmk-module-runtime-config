@@ -44,3 +44,9 @@ void rt_combo_clear_all(void);
 // Sets *len_out to the actual key_position_len. Returns 0 on success, -EINVAL
 // if index is out of range.
 int rt_combo_key_positions(uint8_t index, int32_t *out, uint8_t max, uint8_t *len_out);
+
+// Resolve combo `index`'s devicetree (const) binding to local_id + params.
+// Only out->behavior_local_id / param1 / param2 are filled; the other fields
+// of *out are zeroed. Returns 0, -EINVAL for a bad index or NULL out,
+// -ENODEV if the behavior has no local id.
+int rt_combo_dt_binding(uint8_t index, struct rt_combo_params *out);
