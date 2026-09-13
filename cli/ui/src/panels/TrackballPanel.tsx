@@ -119,7 +119,7 @@ export default function TrackballPanel({ state, features, disabled, run }: Panel
               // still has to be editable, so fall back to its raw name.
               const h = TRACKBALL_HELP[f.name];
               return (
-                <div key={f.name} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <div key={f.name} className="flex max-w-xl flex-wrap items-center gap-x-3 gap-y-1">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1">
                       <span className="text-sm text-zinc-200">{h?.label ?? f.name}</span>

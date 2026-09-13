@@ -66,6 +66,9 @@ export default function KeycodePicker({
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Escape") {
+      // The inspector closes on a window-level Escape; while the list is open
+      // the key belongs to the list, so keep it from reaching that listener.
+      if (open) e.stopPropagation();
       setOpen(false);
       return;
     }

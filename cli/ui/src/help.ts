@@ -22,7 +22,7 @@ import { layerLabel } from "./types";
 /** Keyed by the `display_name` the device reports in /api/state. */
 export const BEHAVIOR_HELP: Record<string, string> = {
   // --- ZMK core ---
-  "Key Press": "HID のキーコードを 1 つ押して、離すと離す (&kp)。",
+  "Key Press": "HID のキーコードを 1 つ送る (&kp)。キーを離すとキーコードも離される。",
   Transparent: "このレイヤーでは何もせず、下のレイヤーの割り当てをそのまま使う (&trans)。",
   None: "何も起こさない (&none)。下のレイヤーにも渡さないので、キーを無効化できる。",
   "Momentary Layer": "押している間だけ指定レイヤーを有効にし、離すと戻る (&mo)。",
