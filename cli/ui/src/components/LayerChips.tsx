@@ -60,7 +60,8 @@ export default function LayerChips({
   const canAdd = availableLayers > 0 && !disabled;
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border-b border-zinc-800/60 px-4 py-2">
+    <div className="flex flex-wrap items-center gap-2 border-b border-zinc-800/60 px-4 py-2.5">
+      <span className="mr-1 text-xs font-medium tracking-wide text-zinc-500">レイヤー</span>
       {layers.map((l) => (
         <div
           key={l.id}
@@ -80,10 +81,10 @@ export default function LayerChips({
             if (!Number.isNaN(from) && from !== l.index) onMove(from, l.index);
           }}
           className={
-            "group flex items-center rounded-full border text-xs " +
+            "group flex items-center rounded-lg border text-sm transition-colors " +
             (l.index === current
-              ? "border-sky-500 bg-sky-600/20 text-sky-200"
-              : "border-zinc-700 text-zinc-300 hover:bg-zinc-800") +
+              ? "border-sky-400 bg-sky-600 font-semibold text-white shadow-md shadow-sky-900/50"
+              : "border-zinc-700 bg-zinc-800/70 text-zinc-200 hover:border-zinc-500 hover:bg-zinc-700") +
             (dragFrom !== null && dragFrom !== l.index ? " border-dashed" : "")
           }
         >
@@ -98,16 +99,23 @@ export default function LayerChips({
                 if (e.key === "Enter") commit(l);
                 if (e.key === "Escape") setEditing(null);
               }}
-              className="w-24 rounded-full border border-sky-600 bg-zinc-950 px-2.5 py-1 text-xs outline-none"
+              className="w-28 rounded-lg border border-sky-600 bg-zinc-950 px-3 py-1.5 text-sm outline-none"
             />
           ) : (
             <button
               onClick={() => onSelect(l.index)}
               onDoubleClick={() => startEdit(l)}
               title="ダブルクリックで名前を編集"
-              className="flex items-center gap-1.5 py-1 pl-2.5 pr-2"
+              className="flex items-center gap-2 py-1.5 pl-2 pr-3"
             >
-              <span className="font-mono text-[10px] text-zinc-500">{l.index}</span>
+              <span
+                className={
+                  "inline-flex h-5 min-w-5 items-center justify-center rounded px-1 font-mono text-[11px] " +
+                  (l.index === current ? "bg-white/20 text-white" : "bg-zinc-950/70 text-zinc-400")
+                }
+              >
+                {l.index}
+              </span>
               <span>{layerLabel(l)}</span>
             </button>
           )}
@@ -126,7 +134,7 @@ export default function LayerChips({
         onClick={onAdd}
         disabled={!canAdd}
         title={availableLayers === 0 ? "available_layers = 0 (再フラッシュが必要)" : "レイヤーを追加"}
-        className="rounded-full border border-dashed border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+        className="rounded-lg border border-dashed border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
       >
         +
       </button>
@@ -137,13 +145,13 @@ export default function LayerChips({
           onClick={() => onRestore(r.id, layers.length)}
           disabled={disabled}
           title="削除したレイヤーを復元"
-          className="rounded-full border border-dashed border-zinc-700 px-2.5 py-1 text-xs text-zinc-500 hover:text-zinc-200 disabled:opacity-40"
+          className="rounded-lg border border-dashed border-zinc-600 px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200 disabled:opacity-40"
         >
           復元: {r.name || `L${r.index}`}
         </button>
       ))}
 
-      <label className="ml-auto flex items-center gap-1.5 text-xs text-zinc-400">
+      <label className="ml-auto flex items-center gap-1.5 text-sm text-zinc-300">
         <input
           type="checkbox"
           checked={showCombos}
