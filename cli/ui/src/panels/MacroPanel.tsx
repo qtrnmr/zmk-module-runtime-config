@@ -3,6 +3,8 @@ import type { PanelProps } from "../App";
 import { macroParse, macroSet } from "../api";
 import ConfirmDialog from "../components/ConfirmDialog";
 import KeycodePicker from "../components/KeycodePicker";
+import { Info } from "../components/Tooltip";
+import { MACRO_HELP } from "../help";
 import { keycodeName, reverseKeycodes, STEP_TYPES, stepPreview } from "../macroFormat";
 import { pretty } from "../prettyKeycode";
 import type { MacroStep } from "../types";
@@ -138,10 +140,25 @@ export default function MacroPanel({ state, features, disabled, run }: PanelProp
             <thead>
               <tr className="border-b border-zinc-800">
                 <th className={TH}>#</th>
-                <th className={TH}>type</th>
+                <th className={TH}>
+                  <span className="flex items-center gap-1">
+                    type
+                    <Info text={MACRO_HELP.type} label="type" />
+                  </span>
+                </th>
                 <th className={TH}>key</th>
-                <th className={TH}>wait_ms</th>
-                <th className={TH}>tap_ms</th>
+                <th className={TH}>
+                  <span className="flex items-center gap-1">
+                    wait_ms
+                    <Info text={MACRO_HELP.wait_ms} label="wait_ms" />
+                  </span>
+                </th>
+                <th className={TH}>
+                  <span className="flex items-center gap-1">
+                    tap_ms
+                    <Info text={MACRO_HELP.tap_ms} label="tap_ms" />
+                  </span>
+                </th>
                 <th className={TH} />
               </tr>
             </thead>

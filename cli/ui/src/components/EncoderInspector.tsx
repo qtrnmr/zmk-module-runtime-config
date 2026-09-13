@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { encoderReset, encoderSet } from "../api";
 import { encoderLayerBinding } from "../board";
+import { ENCODER_HELP } from "../help";
 import { Btn, NumberField } from "../panels/ui";
 import type { EncoderBinding, FeatureKey } from "../types";
 import BindingForm, { type BindingValue } from "./BindingForm";
@@ -60,6 +61,7 @@ function DirectionCard({
       />
       <NumberField
         label="tap_ms"
+        help={ENCODER_HELP.tap_ms}
         value={draft.tap_ms}
         disabled={disabled}
         onChange={(v) => setDraft({ ...draft, tap_ms: v })}

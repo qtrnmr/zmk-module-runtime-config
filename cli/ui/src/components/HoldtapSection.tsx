@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { holdtapReset, holdtapSet } from "../api";
+import { HOLDTAP_HELP } from "../help";
 import { Btn, NumberField } from "../panels/ui";
+import { Info } from "./Tooltip";
 import type { FeatureKey, HoldtapSlot, OpResult } from "../types";
 
 type Draft = Pick<
@@ -76,6 +78,7 @@ export default function HoldtapSection({
       <div className="flex flex-wrap gap-x-3 gap-y-2">
         <NumberField
           label="tapping-term"
+          help={HOLDTAP_HELP["tapping-term"]}
           value={draft.tapping_term_ms}
           min={-1}
           disabled={disabled}
@@ -83,6 +86,7 @@ export default function HoldtapSection({
         />
         <NumberField
           label="quick-tap"
+          help={HOLDTAP_HELP["quick-tap"]}
           value={draft.quick_tap_ms}
           min={-1}
           disabled={disabled}
@@ -90,6 +94,7 @@ export default function HoldtapSection({
         />
         <NumberField
           label="prior-idle"
+          help={HOLDTAP_HELP["prior-idle"]}
           value={draft.require_prior_idle_ms}
           min={-1}
           disabled={disabled}
@@ -97,6 +102,21 @@ export default function HoldtapSection({
         />
         <label className="inline-flex items-center gap-1.5 text-xs text-zinc-400">
           flavor
+          <Info
+            label="flavor"
+            text={
+              <>
+                <p>{HOLDTAP_HELP.flavor}</p>
+                {["hold-preferred", "balanced", "tap-preferred", "tap-unless-interrupted"].map(
+                  (f) => (
+                    <p key={f}>
+                      <span className="font-mono text-zinc-400">{f}</span>: {HOLDTAP_HELP[f]}
+                    </p>
+                  ),
+                )}
+              </>
+            }
+          />
           <select
             value={draft.flavor}
             disabled={disabled}

@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { setKey } from "../api";
 import { holdtapSlotFor } from "../board";
+import { BEHAVIOR_HELP } from "../help";
 import { Btn } from "../panels/ui";
 import { pretty } from "../prettyKeycode";
 import { layerLabel } from "../types";
 import BindingForm, { type BindingValue } from "./BindingForm";
 import HoldtapSection from "./HoldtapSection";
 import type { InspectorProps } from "./Inspector";
+import { Info } from "./Tooltip";
 
 /** The stock &mt / &lt: hold-taps, but not runtime-editable ones. */
 const STOCK_HOLD_TAPS = ["Mod-Tap", "Layer-Tap"];
@@ -58,7 +60,13 @@ export default function KeyInspector({
               ? pretty(current.label.text)
               : `${pretty(current.label.hold)} / ${pretty(current.label.tap)}`)}
         </div>
-        <div className="text-xs text-zinc-500">{current?.label.behavior}</div>
+        <div className="flex items-center gap-1 text-xs text-zinc-500">
+          {current?.label.behavior}
+          <Info
+            text={BEHAVIOR_HELP[current?.label.behavior ?? ""]}
+            label={current?.label.behavior}
+          />
+        </div>
         <div className="mt-1 font-mono text-[11px] text-zinc-600">
           #{current?.behavior_id} {current?.param1} {current?.param2}
         </div>

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Info } from "../components/Tooltip";
 import { pretty } from "../prettyKeycode";
 import type { Label, Unavailable } from "../types";
 
@@ -65,6 +66,7 @@ export function NotAvailable({ title, feature }: { title: string; feature: Unava
 
 export function NumberField({
   label,
+  help,
   value,
   onChange,
   min = 0,
@@ -72,6 +74,8 @@ export function NumberField({
   width = "w-24",
 }: {
   label?: string;
+  /** Shown behind an ⓘ next to the label; omit for self-explanatory fields. */
+  help?: ReactNode;
   value: number;
   onChange(v: number): void;
   min?: number;
@@ -81,6 +85,7 @@ export function NumberField({
   return (
     <label className="inline-flex items-center gap-1.5 text-xs text-zinc-400">
       {label}
+      <Info text={help} label={label} />
       <input
         type="number"
         value={value}

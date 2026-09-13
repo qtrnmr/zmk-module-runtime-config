@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { comboReset, comboSet, type ComboSetBody } from "../api";
+import { COMBO_HELP } from "../help";
 import { Btn, LabelText, NumberField } from "../panels/ui";
 import { pretty } from "../prettyKeycode";
 import type { ComboEntry, FeatureKey, OpResult } from "../types";
 import { layerLabel } from "../types";
 import BindingForm, { type BindingValue } from "./BindingForm";
 import type { InspectorProps } from "./Inspector";
+import { Info } from "./Tooltip";
 
 interface Draft {
   binding: BindingValue;
@@ -133,6 +135,7 @@ export default function ComboInspector({
       <div className="flex flex-wrap gap-3">
         <NumberField
           label="timeout"
+          help={COMBO_HELP.timeout}
           value={draft.timeout_ms}
           min={-1}
           disabled={disabled}
@@ -140,6 +143,7 @@ export default function ComboInspector({
         />
         <NumberField
           label="prior-idle"
+          help={COMBO_HELP["prior-idle"]}
           value={draft.require_prior_idle_ms}
           min={-1}
           disabled={disabled}
@@ -156,10 +160,14 @@ export default function ComboInspector({
           className="accent-sky-500"
         />
         slow-release
+        <Info text={COMBO_HELP["slow-release"]} label="slow-release" />
       </label>
 
       <div className="space-y-1">
-        <span className="text-xs font-medium text-zinc-400">有効レイヤー (空 = 全レイヤー)</span>
+        <span className="flex items-center gap-1 text-xs font-medium text-zinc-400">
+          有効レイヤー (空 = 全レイヤー)
+          <Info text={COMBO_HELP.layers} label="有効レイヤー" />
+        </span>
         <div className="flex flex-wrap gap-x-3 gap-y-1">
           {state.keymap.layers.map((l) => (
             <label key={l.id} className="flex items-center gap-1 text-xs">

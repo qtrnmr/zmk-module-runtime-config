@@ -1,8 +1,10 @@
 import { useMemo } from "react";
+import { BEHAVIOR_HELP, PARAM_HELP } from "../help";
 import { curatedOrder, defaultParam, paramKind } from "../params";
 import type { Behavior, ParamDesc, State } from "../types";
 import { DT_DEFAULT_ID, layerLabel } from "../types";
 import KeycodePicker from "./KeycodePicker";
+import { Info } from "./Tooltip";
 
 export interface BindingValue {
   behavior_id: number;
@@ -121,7 +123,12 @@ export default function BindingForm({
   return (
     <div className="min-w-0 space-y-3">
       <label className="block space-y-1">
-        <span className="text-xs font-medium text-zinc-400">ビヘイビア</span>
+        <span className="flex items-center gap-1 text-xs font-medium text-zinc-400">
+          ビヘイビア
+          {behavior && (
+            <Info text={BEHAVIOR_HELP[behavior.display_name]} label={behavior.display_name} />
+          )}
+        </span>
         <select
           value={value.behavior_id}
           disabled={disabled}
@@ -144,8 +151,12 @@ export default function BindingForm({
 
       {paramKind(meta.param1) !== "none" && (
         <div className="space-y-1">
-          <span className="text-xs font-medium text-zinc-400">
+          <span className="flex items-center gap-1 text-xs font-medium text-zinc-400">
             {meta.param1[0]?.name || "param1"}
+            <Info
+              text={PARAM_HELP[meta.param1[0]?.name ?? ""]}
+              label={meta.param1[0]?.name}
+            />
           </span>
           <fieldset disabled={disabled} className="min-w-0 disabled:opacity-50">
             <ParamEditor
@@ -160,8 +171,12 @@ export default function BindingForm({
 
       {paramKind(meta.param2) !== "none" && (
         <div className="space-y-1">
-          <span className="text-xs font-medium text-zinc-400">
+          <span className="flex items-center gap-1 text-xs font-medium text-zinc-400">
             {meta.param2[0]?.name || "param2"}
+            <Info
+              text={PARAM_HELP[meta.param2[0]?.name ?? ""]}
+              label={meta.param2[0]?.name}
+            />
           </span>
           <fieldset disabled={disabled} className="min-w-0 disabled:opacity-50">
             <ParamEditor

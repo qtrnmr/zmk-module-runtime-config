@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MOD_HELP, keycodeHelp } from "../help";
 import { MOD_BITS, MOD_ORDER, joinMods, splitMods, type ModName } from "../params";
 import { pretty } from "../prettyKeycode";
+import { Info } from "./Tooltip";
 
 const MOD_GLYPH: Record<ModName, string> = {
   LC: "^", LS: "⇧", LA: "⌥", LG: "⌘",
@@ -90,7 +92,7 @@ export default function KeycodePicker({
           <button
             key={m}
             onClick={() => toggle(m)}
-            title={`${m} (0x${MOD_BITS[m].toString(16)})`}
+            title={`${MOD_HELP[m]} ${m} = 0x${MOD_BITS[m].toString(16)}`}
             className={
               "rounded border px-1.5 py-0.5 font-mono text-[11px] " +
               (mods.includes(m)
@@ -103,9 +105,12 @@ export default function KeycodePicker({
           </button>
         ))}
       </div>
-      <div className="flex items-baseline gap-2 rounded border border-zinc-700 bg-zinc-900/60 px-2 py-1 text-xs">
+      <div className="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-900/60 px-2 py-1 text-xs">
         <span className="font-mono text-zinc-300">{canonical}</span>
         <span className="text-zinc-500">{pretty(canonical)}</span>
+        <span className="ml-auto">
+          <Info text={keycodeHelp(canonical)} label={canonical} />
+        </span>
       </div>
 
       <div className="relative">
@@ -131,19 +136,24 @@ export default function KeycodePicker({
             className="absolute top-full right-0 left-0 z-20 mt-1 max-h-64 overflow-y-auto rounded border border-zinc-700 bg-zinc-900 shadow-xl shadow-black/60"
           >
             {hits.map((n, i) => (
-              <li key={n}>
+              <li
+                key={n}
+                className={
+                  "flex items-center gap-1 pr-1.5 " + (i === active ? "bg-zinc-800" : "")
+                }
+              >
                 <button
                   onClick={() => pick(n)}
                   onMouseMove={() => setActive(i)}
                   className={
-                    "flex w-full items-baseline justify-between px-2 py-1 text-left font-mono text-xs " +
-                    (i === active ? "bg-zinc-800 " : "") +
+                    "flex min-w-0 flex-1 items-baseline justify-between px-2 py-1 text-left font-mono text-xs " +
                     (keycodes[n] === base ? "text-sky-300" : "text-zinc-300")
                   }
                 >
-                  <span>{n}</span>
-                  <span className="text-zinc-500">{pretty(n)}</span>
+                  <span className="truncate">{n}</span>
+                  <span className="ml-2 shrink-0 text-zinc-500">{pretty(n)}</span>
                 </button>
+                <Info text={keycodeHelp(n)} label={n} />
               </li>
             ))}
             {!hits.length && <li className="px-2 py-1 text-xs text-zinc-500">該当なし</li>}
