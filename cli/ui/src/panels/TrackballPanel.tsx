@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { PanelProps } from "../App";
 import { trackballReset, trackballSet } from "../api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import { Info } from "../components/Tooltip";
+import { TRACKBALL_HELP, groupTrackballFields } from "../help";
 import type { Processor, TrackballField } from "../types";
 import { layerLabel } from "../types";
 import { Btn, Card, INPUT, NotAvailable, Panel } from "./ui";
@@ -109,29 +111,40 @@ export default function TrackballPanel({ state, features, disabled, run }: Panel
         </label>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {fields.map((f) => (
-          <Card key={f.name}>
-            <div className="space-y-1.5">
-              <div className="flex items-baseline gap-2">
-                <span className="min-w-0 font-mono text-xs break-all text-zinc-400">{f.name}</span>
-                <span
-                  className={
-                    "ml-auto text-xs " +
-                    (marks[f.name] === "✓" ? "text-emerald-400" : "text-amber-300")
-                  }
-                  title={marks[f.name]}
-                >
-                  {marks[f.name] === "✓" || marks[f.name] === "…"
-                    ? marks[f.name]
-                    : marks[f.name] && "!"}
-                </span>
-              </div>
-              {control(f)}
-            </div>
-          </Card>
-        ))}
-      </div>
+      {groupTrackballFields(fields).map(({ group, fields: rows }) => (
+        <Card key={group} title={group}>
+          <div className="space-y-2.5">
+            {rows.map((f) => {
+              // A field this table does not know (another keyboard's processor)
+              // still has to be editable, so fall back to its raw name.
+              const h = TRACKBALL_HELP[f.name];
+              return (
+                <div key={f.name} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm text-zinc-200">{h?.label ?? f.name}</span>
+                      <Info text={h?.help} label={h?.label ?? f.name} />
+                    </div>
+                    <div className="font-mono text-[11px] break-all text-zinc-600">{f.name}</div>
+                  </div>
+                  {control(f)}
+                  <span
+                    className={
+                      "w-3 text-xs " +
+                      (marks[f.name] === "✓" ? "text-emerald-400" : "text-amber-300")
+                    }
+                    title={marks[f.name]}
+                  >
+                    {marks[f.name] === "✓" || marks[f.name] === "…"
+                      ? marks[f.name]
+                      : marks[f.name] && "!"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      ))}
 
       <div>
         <Btn kind="danger" disabled={disabled} onClick={() => setResetOpen(true)}>
