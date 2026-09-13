@@ -4,10 +4,7 @@ import { trackballReset, trackballSet } from "../api";
 import ConfirmDialog from "../components/ConfirmDialog";
 import type { Processor, TrackballField } from "../types";
 import { layerLabel } from "../types";
-import { Btn, NotAvailable, Panel } from "./ui";
-
-const INPUT =
-  "rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-100 disabled:opacity-50";
+import { Btn, Card, INPUT, NotAvailable, Panel } from "./ui";
 
 export default function TrackballPanel({ state, features, disabled, run }: PanelProps) {
   const tb = features.trackball;
@@ -31,7 +28,7 @@ export default function TrackballPanel({ state, features, disabled, run }: Panel
       const r = await trackballSet(id, f.name, value);
       setMarks((m) => ({ ...m, [f.name]: r.ok ? "✓" : (r.error ?? "失敗") }));
       return r;
-    }, `${f.name} = ${value}`);
+    }, `${f.name} = ${value}`, ["trackball"]);
   };
 
   const control = (f: TrackballField) => {
@@ -112,24 +109,31 @@ export default function TrackballPanel({ state, features, disabled, run }: Panel
         </label>
       )}
 
-      <dl className="grid max-w-2xl grid-cols-[minmax(0,1fr)_auto_1.5rem] items-center gap-x-3 gap-y-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         {fields.map((f) => (
-          <div key={f.name} className="contents">
-            <dt className="min-w-0 font-mono text-xs break-all text-zinc-400">{f.name}</dt>
-            <dd className="justify-self-end">{control(f)}</dd>
-            <dd
-              className={
-                "text-xs " + (marks[f.name] === "✓" ? "text-emerald-400" : "text-amber-300")
-              }
-              title={marks[f.name]}
-            >
-              {marks[f.name] === "✓" || marks[f.name] === "…" ? marks[f.name] : marks[f.name] && "!"}
-            </dd>
-          </div>
+          <Card key={f.name}>
+            <div className="space-y-1.5">
+              <div className="flex items-baseline gap-2">
+                <span className="min-w-0 font-mono text-xs break-all text-zinc-400">{f.name}</span>
+                <span
+                  className={
+                    "ml-auto text-xs " +
+                    (marks[f.name] === "✓" ? "text-emerald-400" : "text-amber-300")
+                  }
+                  title={marks[f.name]}
+                >
+                  {marks[f.name] === "✓" || marks[f.name] === "…"
+                    ? marks[f.name]
+                    : marks[f.name] && "!"}
+                </span>
+              </div>
+              {control(f)}
+            </div>
+          </Card>
         ))}
-      </dl>
+      </div>
 
-      <div className="pt-2">
+      <div>
         <Btn kind="danger" disabled={disabled} onClick={() => setResetOpen(true)}>
           既定に戻す
         </Btn>
@@ -147,7 +151,7 @@ export default function TrackballPanel({ state, features, disabled, run }: Panel
         onCancel={() => setResetOpen(false)}
         onConfirm={() => {
           setResetOpen(false);
-          void run(() => trackballReset(id), `プロセッサ ${id} を既定に戻しました`);
+          void run(() => trackballReset(id), `プロセッサ ${id} を既定に戻しました`, ["trackball"]);
         }}
       />
     </Panel>

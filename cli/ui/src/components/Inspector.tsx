@@ -58,7 +58,7 @@ export default function Inspector(props: InspectorProps) {
           ×
         </button>
       </header>
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="min-h-0 min-w-0 flex-1 space-y-3 overflow-y-auto p-4">
         {selection.kind === "key" && <KeyInspector {...props} pos={selection.pos} />}
         {selection.kind === "combo" && <ComboInspector {...props} index={selection.index} />}
         {selection.kind === "encoder" && <EncoderInspector {...props} sensor={selection.sensor} />}

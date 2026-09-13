@@ -47,21 +47,38 @@ The `zmkrt` command provides the following command groups:
 USB serial port while running, so other `zmkrt` commands must wait until you stop it (Ctrl-C).
 Every change is logged to `.zmkrt-backup.jsonl`; a keymap snapshot is written on start.
 
-Tabs, one per runtime-editable feature:
+The keyboard drawing *is* the page. The icon rail on the left switches between four pages:
 
-| Tab | Edits |
+| Page | Edits |
 |---|---|
-| キーマップ | Key bindings on the physical layout, plus layer add/rename/move/remove/restore |
+| キーマップ | The board itself: key bindings, hold-tap timing, combos, the encoder, plus layer add/rename/move/remove/restore |
 | マクロ | Macro slots: a step table (tap/press/release, keycode, wait, tap) and a DSL import |
-| Hold-tap | `tapping-term-ms`, `quick-tap-ms`, `require-prior-idle-ms`, flavor per slot |
 | 条件レイヤー | if-layers / then-layer per entry |
-| コンボ | Binding, timeout, prior-idle, active layers, slow-release (hovering a row lights its keys) |
-| エンコーダ | cw / ccw binding and `tap_ms` per sensor and layer |
 | トラックボール | Every input-processor field (scale, rotation, invert, axis-snap, temp-layer) |
 
-A tab whose custom RPC subsystem the keyboard does not ship says so instead of showing a form.
+On the キーマップ page everything is edited on the board, through an inspector that slides in from
+the right (`Esc` closes it):
+
+- **Layer chips** above the board: click to switch, double-click to rename, drag to reorder, `×` to
+  remove, `+` to add. A removed layer comes back as a dashed 復元 chip.
+- **Click a key** → its binding form, the hold-tap timing when the key is a runtime hold-tap
+  (`&mt` / `&lt` are stock behaviors and say so instead), and the same position on every other
+  layer — click a row there to follow the key across layers.
+- **Combos** are drawn as amber links between the keys they listen on, with a pill showing what the
+  combo actually does. Click the pill to edit binding / timeout / prior-idle / active layers /
+  slow-release. The コンボ表示 toggle at the right of the chip row hides them (remembered per browser).
+- **The encoder knob** shows its `↻` / `↺` bindings for the current layer; click it to edit them.
+- **The trackball** opens its page.
+- The rail's `…` menu holds 変更履歴 / スナップショット / リセット… (and エンコーダ on a layout whose
+  knob is not drawn).
+
+A feature whose custom RPC subsystem the keyboard does not ship says so instead of showing a form.
 Counts that are fixed at build time — macro slots, hold-tap and conditional-layer slots, combo
 key-positions — are read-only, with the reason shown.
+
+For API users: `GET /api/features` takes an optional `?only=macros,holdtaps,condlayers,combos,encoder,trackball`
+to collect just those features (an unknown name is a 400). The UI uses it so one edit costs a couple
+of serial round trips instead of the ~40 a full document takes.
 
 ```bash
 zmkrt ui                 # open http://127.0.0.1:8760 in the browser

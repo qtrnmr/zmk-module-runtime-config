@@ -14,7 +14,7 @@ export function LabelText({ label }: { label?: Label }) {
   );
 }
 
-/** Shell every feature panel shares: heading, optional note, scroll container. */
+/** Shell every rail page shares: page header, optional note, scroll container. */
 export function Panel({
   title,
   note,
@@ -25,15 +25,31 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="min-h-0 min-w-0 space-y-3 overflow-y-auto p-4">
-      <header className="space-y-1">
-        <h2 className="text-sm font-semibold text-zinc-200">{title}</h2>
-        {note && <p className="text-xs text-zinc-500">{note}</p>}
-      </header>
-      {children}
+    <section className="min-h-0 min-w-0 overflow-y-auto p-6">
+      <div className="mx-auto max-w-5xl space-y-4">
+        <header className="space-y-1">
+          <h2 className="text-lg font-semibold text-zinc-100">{title}</h2>
+          {note && <p className="text-sm text-zinc-500">{note}</p>}
+        </header>
+        {children}
+      </div>
     </section>
   );
 }
+
+/** A bordered block; the one container these pages are built out of. */
+export function Card({ title, children }: { title?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+      {title && <h3 className="text-xs font-medium text-zinc-400">{title}</h3>}
+      {children}
+    </div>
+  );
+}
+
+/** Shared input chrome, so every field on every page matches the inspector. */
+export const INPUT =
+  "rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 focus:border-sky-500 focus:outline-none disabled:opacity-50";
 
 /** What a tab shows when the keyboard does not ship that custom RPC subsystem. */
 export function NotAvailable({ title, feature }: { title: string; feature: Unavailable }) {
@@ -71,7 +87,7 @@ export function NumberField({
         min={min}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
-        className={`${width} rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-100 disabled:opacity-50`}
+        className={`${width} ${INPUT}`}
       />
     </label>
   );
@@ -101,7 +117,7 @@ export function Btn({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`rounded px-2.5 py-1 text-xs font-medium disabled:opacity-40 ${cls}`}
+      className={`rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-40 ${cls}`}
     >
       {children}
     </button>

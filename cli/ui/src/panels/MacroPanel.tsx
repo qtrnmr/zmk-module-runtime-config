@@ -6,7 +6,7 @@ import KeycodePicker from "../components/KeycodePicker";
 import { keycodeName, reverseKeycodes, STEP_TYPES, stepPreview } from "../macroFormat";
 import { pretty } from "../prettyKeycode";
 import type { MacroStep } from "../types";
-import { Btn, NotAvailable, NumberField, Panel, TD, TH } from "./ui";
+import { Btn, NotAvailable, NumberField, Panel, TD, TH, Card, INPUT } from "./ui";
 
 export default function MacroPanel({ state, features, disabled, run }: PanelProps) {
   const m = features.macros;
@@ -77,7 +77,7 @@ export default function MacroPanel({ state, features, disabled, run }: PanelProp
       })));
       // The device applies an unbalanced macro; surface the warning in the toast.
       return r.warning ? { ...r, error: r.error || `適用しました (注意: ${r.warning})` } : r;
-    }, `slot ${slot} に ${next.length} ステップを書き込みました`);
+    }, `slot ${slot} に ${next.length} ステップを書き込みました`, ["macros"]);
 
   return (
     <Panel
@@ -85,7 +85,7 @@ export default function MacroPanel({ state, features, disabled, run }: PanelProp
       note={`スロット数 (${slots.length}) と 1 スロットあたりの最大ステップ数 (${maxSteps}) は firmware のビルド時設定です。`}
     >
       <div className="grid min-w-0 gap-4 lg:grid-cols-[260px_1fr]">
-        <ul className="min-w-0 space-y-1">
+        <ul className="min-w-0 space-y-1 rounded-xl border border-zinc-800 bg-zinc-900/40 p-2">
           {slots.map((s) => (
             <li key={s.slot}>
               <button
@@ -102,7 +102,7 @@ export default function MacroPanel({ state, features, disabled, run }: PanelProp
           ))}
         </ul>
 
-        <div className="min-w-0 space-y-3">
+        <Card>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-zinc-400">
               slot {slot} · {steps.length}/{maxSteps} ステップ
@@ -120,7 +120,7 @@ export default function MacroPanel({ state, features, disabled, run }: PanelProp
                 onChange={(e) => setDsl(e.target.value)}
                 rows={3}
                 placeholder="press GLOBE | wait 80 | press LEFT | release LEFT | release GLOBE"
-                className="w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1 font-mono text-xs"
+                className={`w-full font-mono text-xs ${INPUT}`}
               />
               <div className="flex items-center gap-2">
                 <Btn kind="primary" onClick={() => void parse()}>
@@ -156,7 +156,7 @@ export default function MacroPanel({ state, features, disabled, run }: PanelProp
                       onChange={(e) =>
                         patch(i, { type: Number(e.target.value) as MacroStep["type"] })
                       }
-                      className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm disabled:opacity-50"
+                      className={INPUT}
                     >
                       {STEP_TYPES.map((t) => (
                         <option key={t.value} value={t.value}>
@@ -169,7 +169,7 @@ export default function MacroPanel({ state, features, disabled, run }: PanelProp
                     <button
                       onClick={() => setEditKey(editKey === i ? null : i)}
                       disabled={disabled}
-                      className="rounded border border-zinc-700 px-2 py-1 font-mono text-xs hover:bg-zinc-800 disabled:opacity-50"
+                      className={`font-mono text-xs hover:bg-zinc-800 ${INPUT}`}
                     >
                       {pretty(s.label ?? keycodeName(rev, s.keycode))}
                     </button>
@@ -241,7 +241,7 @@ export default function MacroPanel({ state, features, disabled, run }: PanelProp
             </Btn>
           </div>
           <p className="font-mono text-[11px] break-all text-zinc-600">{stepPreview(steps)}</p>
-        </div>
+        </Card>
       </div>
 
       <ConfirmDialog

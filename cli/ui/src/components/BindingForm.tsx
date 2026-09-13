@@ -147,7 +147,7 @@ export default function BindingForm({
           <span className="text-xs font-medium text-zinc-400">
             {meta.param1[0]?.name || "param1"}
           </span>
-          <fieldset disabled={disabled} className="disabled:opacity-50">
+          <fieldset disabled={disabled} className="min-w-0 disabled:opacity-50">
             <ParamEditor
               descs={meta.param1}
               value={value.param1}
@@ -163,7 +163,7 @@ export default function BindingForm({
           <span className="text-xs font-medium text-zinc-400">
             {meta.param2[0]?.name || "param2"}
           </span>
-          <fieldset disabled={disabled} className="disabled:opacity-50">
+          <fieldset disabled={disabled} className="min-w-0 disabled:opacity-50">
             <ParamEditor
               descs={meta.param2}
               value={value.param2}

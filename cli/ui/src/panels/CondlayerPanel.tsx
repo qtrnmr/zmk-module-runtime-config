@@ -3,7 +3,7 @@ import type { PanelProps } from "../App";
 import { condlayerReset, condlayerSet } from "../api";
 import type { CondlayerEntry } from "../types";
 import { layerLabel } from "../types";
-import { Btn, NotAvailable, Panel, TD, TH } from "./ui";
+import { Btn, Card, INPUT, NotAvailable, Panel } from "./ui";
 
 interface Draft {
   if_layers: number[];
@@ -49,26 +49,61 @@ export default function CondlayerPanel({ state, features, disabled, run }: Panel
       title="条件レイヤー"
       note="if-layers のレイヤーが同時に有効なとき then-layer も有効になります。エントリ数は devicetree 固定です。"
     >
-      <table className="w-full max-w-3xl">
-        <thead>
-          <tr className="border-b border-zinc-800">
-            <th className={TH}>index</th>
-            <th className={TH}>if-layers</th>
-            <th className={TH}>then-layer</th>
-            <th className={TH} />
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((e) => {
-            const d = drafts[e.index] ?? draftOf(e);
-            const dirty = !same(d.if_layers, e.if_layers) || d.then_layer !== e.then_layer;
-            const isOpen = open === e.index;
-            return (
-              <tr key={e.index} className="border-b border-zinc-800/60 align-top">
-                <td className={`${TD} font-mono text-zinc-400`}>{e.index}</td>
-                <td className={TD}>
-                  {isOpen ? (
-                    <div className="flex max-w-md flex-wrap gap-x-3 gap-y-1">
+      <div className="space-y-2">
+        {entries.map((e) => {
+          const d = drafts[e.index] ?? draftOf(e);
+          const dirty = !same(d.if_layers, e.if_layers) || d.then_layer !== e.then_layer;
+          const isOpen = open === e.index;
+          return (
+            <Card key={e.index}>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <span className="font-mono text-xs text-zinc-500">#{e.index}</span>
+                <span className="text-sm text-zinc-200">
+                  {e.if_layers.length ? e.if_layers.map(name).join(" + ") : "(なし)"}
+                </span>
+                <span className="text-zinc-600">→</span>
+                <span className="text-sm text-sky-300">{name(e.then_layer)}</span>
+                <span className="ml-auto inline-flex gap-2">
+                  <Btn onClick={() => setOpen(isOpen ? null : e.index)}>
+                    {isOpen ? "閉じる" : "編集"}
+                  </Btn>
+                  {isOpen && (
+                    <>
+                      <Btn
+                        kind="primary"
+                        disabled={disabled || !dirty}
+                        onClick={() =>
+                          void run(
+                            () => condlayerSet(e.index, d.if_layers, d.then_layer),
+                            `entry ${e.index} を適用しました`,
+                            ["condlayers"],
+                          )
+                        }
+                      >
+                        適用
+                      </Btn>
+                      <Btn
+                        disabled={disabled}
+                        onClick={() =>
+                          void run(
+                            () => condlayerReset(e.index),
+                            `entry ${e.index} を既定に戻しました`,
+                            ["condlayers"],
+                          )
+                        }
+                      >
+                        既定に戻す
+                      </Btn>
+                    </>
+                  )}
+                </span>
+              </div>
+
+              {isOpen && (
+                <div className="space-y-3 border-t border-zinc-800 pt-3">
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-zinc-400">if-layers</span>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1">
                       {state.keymap.layers.map((l) => (
                         <label key={l.id} className="flex items-center gap-1 text-xs">
                           <input
@@ -82,14 +117,9 @@ export default function CondlayerPanel({ state, features, disabled, run }: Panel
                         </label>
                       ))}
                     </div>
-                  ) : (
-                    <span className="text-zinc-300">
-                      {e.if_layers.length ? e.if_layers.map(name).join(" + ") : "(なし)"}
-                    </span>
-                  )}
-                </td>
-                <td className={TD}>
-                  {isOpen ? (
+                  </div>
+                  <label className="flex items-center gap-2 text-xs font-medium text-zinc-400">
+                    then-layer
                     <select
                       value={d.then_layer}
                       disabled={disabled}
@@ -99,7 +129,7 @@ export default function CondlayerPanel({ state, features, disabled, run }: Panel
                           [e.index]: { ...x[e.index], then_layer: Number(ev.target.value) },
                         }))
                       }
-                      className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm disabled:opacity-50"
+                      className={INPUT}
                     >
                       {state.keymap.layers.map((l) => (
                         <option key={l.id} value={l.index}>
@@ -107,49 +137,13 @@ export default function CondlayerPanel({ state, features, disabled, run }: Panel
                         </option>
                       ))}
                     </select>
-                  ) : (
-                    <span className="text-zinc-300">{name(e.then_layer)}</span>
-                  )}
-                </td>
-                <td className={`${TD} whitespace-nowrap`}>
-                  <span className="inline-flex gap-2">
-                    <Btn onClick={() => setOpen(isOpen ? null : e.index)}>
-                      {isOpen ? "閉じる" : "編集"}
-                    </Btn>
-                    {isOpen && (
-                      <>
-                        <Btn
-                          kind="primary"
-                          disabled={disabled || !dirty}
-                          onClick={() =>
-                            void run(
-                              () => condlayerSet(e.index, d.if_layers, d.then_layer),
-                              `entry ${e.index} を適用しました`,
-                            )
-                          }
-                        >
-                          適用
-                        </Btn>
-                        <Btn
-                          disabled={disabled}
-                          onClick={() =>
-                            void run(
-                              () => condlayerReset(e.index),
-                              `entry ${e.index} を既定に戻しました`,
-                            )
-                          }
-                        >
-                          既定に戻す
-                        </Btn>
-                      </>
-                    )}
-                  </span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  </label>
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
     </Panel>
   );
 }
