@@ -888,7 +888,7 @@ static int behavior_runtime_hold_tap_init(const struct device *dev) {
         .flavor = (uint8_t)cfg->flavor,
     };
     data->t = dt;
-    rt_holdtap_register(data->slot, &data->t, &dt);
+    rt_holdtap_register(data->slot, &data->t, &dt, dev->name);
     return 0;
 }
 

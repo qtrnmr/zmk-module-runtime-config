@@ -15,8 +15,15 @@ struct rt_holdtap_timing {
 // (the mutable data->t consulted on every keypress) and its devicetree
 // defaults at init. If a saved NVS value exists for the slot it is applied to
 // *live immediately (or when settings load completes).
+// behavior_name is the registering device's dev->name (a static devicetree
+// string, stored by pointer); pass NULL if unknown.
 void rt_holdtap_register(uint8_t slot, struct rt_holdtap_timing *live,
-                         const struct rt_holdtap_timing *dt_default);
+                         const struct rt_holdtap_timing *dt_default,
+                         const char *behavior_name);
+
+// Device name of the behavior that registered `slot`, or NULL if the slot is
+// not registered (or was registered without a name).
+const char *rt_holdtap_behavior_name(uint8_t slot);
 
 // Fill *out with the slot's current live timing. Returns 0 if the slot is
 // registered, negative otherwise.

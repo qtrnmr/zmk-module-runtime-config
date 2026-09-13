@@ -11,6 +11,9 @@ message HoldTapInfo {
     int32  require_prior_idle_ms = 4;
     uint32 flavor                = 5;
     bool   found                 = 6;
+    // zmk_behavior_local_id_t of the behavior owning this slot; 0 = unknown
+    // (firmware without this field, or a name with no local id).
+    uint32 behavior_id           = 7;
 }
 
 message Empty {}

@@ -11,6 +11,7 @@
 #include <pb_encode.h>
 #include <zephyr/logging/log.h>
 
+#include <zmk/behavior.h>
 #include <zmk/runtime_holdtap.h>
 #include <zmk/holdtap/holdtap.pb.h>
 #include <zmk/studio/custom.h>
@@ -54,6 +55,12 @@ static void handle_get(const zmk_holdtap_SlotRequest *req, zmk_holdtap_Response 
         info->quick_tap_ms = t.quick_tap_ms;
         info->require_prior_idle_ms = t.require_prior_idle_ms;
         info->flavor = t.flavor;
+        // Report which behavior owns this slot so the UI can match a key's
+        // binding to its timing. UINT16_MAX is the "unknown name" sentinel of
+        // zmk_behavior_get_local_id(); normalize it (and a missing name) to 0.
+        const char *name = rt_holdtap_behavior_name(slot);
+        zmk_behavior_local_id_t id = name ? zmk_behavior_get_local_id(name) : UINT16_MAX;
+        info->behavior_id = (id == UINT16_MAX) ? 0 : id;
     }
     resp->which_response_type = zmk_holdtap_Response_get_tag;
 }
