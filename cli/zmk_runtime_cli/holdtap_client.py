@@ -53,6 +53,8 @@ def info_to_dict(info: "ht_pb2.HoldTapInfo") -> dict:
         "flavor": flavor_name(info.flavor),
         "flavor_index": info.flavor,
         "found": info.found,
+        # local id of the behavior owning the slot; 0 on firmware without it
+        "behavior_id": info.behavior_id,
     }
 
 

@@ -98,3 +98,13 @@ def test_holdtap_subcommands_parse():
     assert ns2.slot == 2 and ns2.func is _cli.cmd_holdtap_get
     assert p.parse_args(["holdtap", "list"]).func is _cli.cmd_holdtap_list
     assert p.parse_args(["holdtap", "reset", "1"]).func is _cli.cmd_holdtap_reset
+
+
+def test_info_to_dict_carries_the_behavior_id():
+    info = ht_pb2.HoldTapInfo(slot=0, tapping_term_ms=200, found=True, behavior_id=35)
+    assert hc.info_to_dict(info)["behavior_id"] == 35
+
+
+def test_info_to_dict_reports_zero_behavior_id_for_old_firmware():
+    info = ht_pb2.HoldTapInfo(slot=0, tapping_term_ms=200, found=True)
+    assert hc.info_to_dict(info)["behavior_id"] == 0

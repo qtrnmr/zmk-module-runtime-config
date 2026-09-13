@@ -109,6 +109,12 @@ def info_to_dict(info: cb_pb2.ComboInfo) -> dict:
         "layers": mask_to_layers(info.layer_mask),
         "slow_release": info.slow_release,
         "found": info.found,
+        # The devicetree binding, or None on firmware that does not report it.
+        "dt_binding": ({
+            "behavior_id": info.dt_binding.behavior_id,
+            "param1": info.dt_binding.param1,
+            "param2": info.dt_binding.param2,
+        } if info.HasField("dt_binding") else None),
     }
 
 

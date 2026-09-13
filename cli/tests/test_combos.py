@@ -246,3 +246,17 @@ def test_combo_subcommands_parse():
     assert p.parse_args(["combo", "reset", "1"]).func is _cli.cmd_combo_reset
     ns2 = p.parse_args(["combo", "set", "3", "timeout-ms", "40"])
     assert ns2.field == "timeout-ms" and ns2.value == "40"
+
+
+def test_info_to_dict_carries_the_devicetree_binding():
+    info = cb_pb2.ComboInfo(index=0, found=True)
+    info.binding.behavior_id = 0
+    info.dt_binding.behavior_id = 8
+    info.dt_binding.param1 = 458795
+    d = cc.info_to_dict(info)
+    assert d["dt_binding"] == {"behavior_id": 8, "param1": 458795, "param2": 0}
+
+
+def test_info_to_dict_has_no_devicetree_binding_on_old_firmware():
+    info = cb_pb2.ComboInfo(index=0, found=True)
+    assert cc.info_to_dict(info)["dt_binding"] is None

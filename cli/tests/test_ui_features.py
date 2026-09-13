@@ -136,7 +136,7 @@ def test_collect_holdtaps():
     assert out["flavors"][1] == "balanced"
     assert out["slots"] == [{"slot": 0, "tapping_term_ms": 200, "quick_tap_ms": 0,
                              "require_prior_idle_ms": 0, "flavor": "balanced",
-                             "flavor_index": 1, "found": True}]
+                             "flavor_index": 1, "found": True, "behavior_id": 0}]
 
 
 def test_collect_holdtaps_unavailable_names_the_missing_subsystem():
