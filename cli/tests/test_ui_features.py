@@ -293,6 +293,70 @@ class _StubSession:
     combos_client = encoder_client = rip_client = _boom
 
 
+def test_collect_combos_effective_is_the_devicetree_binding_when_untouched():
+    count = cb_pb2.Response()
+    count.count.count = 1
+    got = cb_pb2.Response()
+    info = got.get.info
+    info.index = 0
+    info.key_positions.extend([11, 10])
+    info.binding.behavior_id = 0
+    info.dt_binding.behavior_id = 8
+    info.dt_binding.param1 = KEY_A
+    info.found = True
+    out = F.collect_combos(_session([
+        _subsystems("zmk__combos"),
+        _call(count.SerializeToString()),
+        _call(got.SerializeToString()),
+    ]), BY_ID, LAYERS, REV)
+    e = out["entries"][0]
+    assert e["dt_binding"]["label"] == {"text": "A", "behavior": "Key Press"}
+    assert e["effective"] == {"behavior_id": 8, "param1": KEY_A, "param2": 0,
+                              "label": {"text": "A", "behavior": "Key Press"}}
+
+
+def test_collect_combos_effective_is_the_live_binding_when_overridden():
+    count = cb_pb2.Response()
+    count.count.count = 1
+    got = cb_pb2.Response()
+    info = got.get.info
+    info.index = 0
+    info.binding.behavior_id = 8
+    info.binding.param1 = KEY_A
+    info.dt_binding.behavior_id = 8
+    info.dt_binding.param1 = KEY_A + 1
+    info.found = True
+    out = F.collect_combos(_session([
+        _subsystems("zmk__combos"),
+        _call(count.SerializeToString()),
+        _call(got.SerializeToString()),
+    ]), BY_ID, LAYERS, REV)
+    assert out["entries"][0]["effective"]["param1"] == KEY_A
+
+
+def test_collect_combos_effective_falls_back_to_dt_default_label_on_old_firmware():
+    count = cb_pb2.Response()
+    count.count.count = 1
+    got = cb_pb2.Response()
+    info = got.get.info
+    info.index = 0
+    info.binding.behavior_id = 0
+    info.found = True
+    out = F.collect_combos(_session([
+        _subsystems("zmk__combos"),
+        _call(count.SerializeToString()),
+        _call(got.SerializeToString()),
+    ]), BY_ID, LAYERS, REV)
+    e = out["entries"][0]
+    assert e["dt_binding"] is None
+    assert e["effective"]["label"] == F.DT_DEFAULT_LABEL
+
+
+def test_build_features_only_collects_the_named_features():
+    out = F.build_features(_StubSession(), LAYERS, [KEY_PRESS], REV, only={"holdtaps"})
+    assert set(out) == {"holdtaps"}
+
+
 def test_build_features_isolates_failures_per_feature():
     doc = F.build_features(_StubSession(), LAYERS, [KEY_PRESS], REV)
     assert set(doc) == {"macros", "holdtaps", "condlayers", "combos", "encoder", "trackball"}

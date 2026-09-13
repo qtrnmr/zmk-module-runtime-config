@@ -11,7 +11,7 @@ from urllib.parse import urlsplit, parse_qs
 
 from .. import holdtap_client, macro_dsl, rip_client
 from ..backup import append_backup, read_backup_log, snapshot_path
-from .features import build_features_doc
+from .features import FEATURE_KEYS, build_features_doc
 from .native_client import RpcError
 from .session import DeviceSession
 from .state import build_state, label_binding
@@ -156,8 +156,16 @@ def api_backup_log(_, query):
 # ---- feature routes -------------------------------------------------------
 # All of them: validate body -> session lock -> require_unlocked -> backup the
 # `before` value read right before the RPC -> RPC.
-def api_features(session, _):
-    return 200, build_features_doc(session)
+def api_features(session, query):
+    """?only=a,b collects just those features (the UI refetches one at a time)."""
+    only = None
+    raw = query.get("only", [""])[0] if isinstance(query, dict) else ""
+    if raw:
+        only = {s.strip() for s in raw.split(",") if s.strip()}
+        bad = only - set(FEATURE_KEYS)
+        if bad:
+            raise HttpError(400, f"unknown feature(s): {', '.join(sorted(bad))}")
+    return 200, build_features_doc(session, only=only)
 
 
 def api_macro_parse(_, body):

@@ -11,6 +11,7 @@ import pytest
 
 from zmk_runtime_cli import backup
 from zmk_runtime_cli.ui import server as SV
+from zmk_runtime_cli.ui import features as F
 
 
 class _Rec:
@@ -150,8 +151,10 @@ class StubSession:
 @pytest.fixture
 def srv(tmp_path, monkeypatch):
     monkeypatch.setattr(backup, "BACKUP_LOG", tmp_path / "b.jsonl")
-    monkeypatch.setattr(SV, "build_features_doc",
-                        lambda s: {"macros": {"available": True, "slots": []}})
+    def _doc(s, only=None):
+        full = {k: {"available": True, "slots": []} for k in F.FEATURE_KEYS}
+        return full if only is None else {k: full[k] for k in F.FEATURE_KEYS if k in only}
+    monkeypatch.setattr(SV, "build_features_doc", _doc)
     static = tmp_path / "static"
     static.mkdir()
     sess = StubSession()
@@ -182,6 +185,18 @@ def test_features_document(srv):
     _, port = srv
     st, body = _req(port, "GET", "/api/features")
     assert st == 200 and body["macros"]["available"] is True
+
+
+def test_features_only_query_limits_the_document(srv):
+    _, port = srv
+    st, doc = _req(port, "GET", "/api/features?only=holdtaps,combos")
+    assert st == 200 and set(doc) == {"holdtaps", "combos"}
+
+
+def test_features_only_rejects_an_unknown_name(srv):
+    _, port = srv
+    st, doc = _req(port, "GET", "/api/features?only=nope")
+    assert st == 400 and "nope" in doc["error"]
 
 
 # ---- macros ---------------------------------------------------------------

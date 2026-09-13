@@ -16,6 +16,10 @@ from . import labels, state
 #: Upper bound for the macro slot probe (see count_macro_slots).
 MACRO_SLOTS_PROBE = 64
 
+#: Every key of the /api/features document, in document order. Also the set of
+#: names `GET /api/features?only=` accepts.
+FEATURE_KEYS = ("macros", "holdtaps", "condlayers", "combos", "encoder", "trackball")
+
 
 #: Combos and encoder bindings report behavior_id 0 for "never overridden at
 #: runtime, still the devicetree binding" — see make_binding() in
@@ -109,6 +113,14 @@ def collect_combos(session, by_id, layers_by_index, rev) -> dict:
             info = r["info"]
             b = info["binding"]
             b["label"] = binding_label(b, by_id, layers_by_index, rev)
+            dt = info.get("dt_binding")
+            if dt is not None:
+                dt["label"] = binding_label(dt, by_id, layers_by_index, rev)
+            # What the combo really does right now: the runtime override if
+            # there is one, else the devicetree binding (only known on firmware
+            # that reports dt_binding; older firmware keeps the DT 既定 label).
+            src = b if b["behavior_id"] != 0 else (dt if dt is not None else b)
+            info["effective"] = dict(src)
             entries.append(info)
         return {"available": True, "entries": entries}
     except Exception as exc:  # noqa: BLE001
@@ -141,24 +153,28 @@ def collect_trackball(session) -> dict:
         return _unavailable(exc)
 
 
-def build_features(session, layers_by_index, behaviors, rev) -> dict:
+def build_features(session, layers_by_index, behaviors, rev, only=None) -> dict:
+    """The features document. `only` (a set of FEATURE_KEYS) collects just those;
+    every other feature is omitted from the document entirely."""
     by_id = {b["id"]: b for b in behaviors}
+    wanted = set(FEATURE_KEYS) if only is None else set(only)
+    collectors = {
+        "macros": lambda: collect_macros(session, rev),
+        "holdtaps": lambda: collect_holdtaps(session),
+        "condlayers": lambda: collect_condlayers(session),
+        "combos": lambda: collect_combos(session, by_id, layers_by_index, rev),
+        "encoder": lambda: collect_encoder(session, by_id, layers_by_index, rev),
+        "trackball": lambda: collect_trackball(session),
+    }
     with session:
-        return {
-            "macros": collect_macros(session, rev),
-            "holdtaps": collect_holdtaps(session),
-            "condlayers": collect_condlayers(session),
-            "combos": collect_combos(session, by_id, layers_by_index, rev),
-            "encoder": collect_encoder(session, by_id, layers_by_index, rev),
-            "trackball": collect_trackball(session),
-        }
+        return {k: collectors[k]() for k in FEATURE_KEYS if k in wanted}
 
 
-def build_features_doc(session) -> dict:
+def build_features_doc(session, only=None) -> dict:
     """Gather the layer names / behaviors the labels need, then build the doc."""
     with session:
         layers_by_index = {layer["index"]: layer["name"]
                            for layer in session.keymap_client().get_layers()}
         behaviors = session.behaviors()
     rev = state.reverse_keycodes(state.keycode_table())
-    return build_features(session, layers_by_index, behaviors, rev)
+    return build_features(session, layers_by_index, behaviors, rev, only=only)
