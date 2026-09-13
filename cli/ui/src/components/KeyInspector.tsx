@@ -64,6 +64,34 @@ export default function KeyInspector({
         </div>
       </div>
 
+      <section className="space-y-1">
+        <h3 className="text-xs font-medium text-zinc-400">他のレイヤーでのこのキー</h3>
+        <ul className="divide-y divide-zinc-800/60 rounded border border-zinc-800">
+          {state.keymap.layers
+            .filter((l) => l.index !== layer.index)
+            .map((l) => {
+              const b = l.bindings[pos];
+              const text = !b
+                ? "—"
+                : "text" in b.label
+                  ? pretty(b.label.text)
+                  : `${pretty(b.label.hold)} / ${pretty(b.label.tap)}`;
+              return (
+                <li key={l.id}>
+                  <button
+                    onClick={() => onSelectLayer(l.index)}
+                    className="flex w-full items-center gap-2 px-2 py-1 text-left text-xs leading-4 hover:bg-zinc-800"
+                  >
+                    <span className="w-5 font-mono text-zinc-500">{l.index}</span>
+                    <span className="w-24 truncate text-zinc-400">{layerLabel(l)}</span>
+                    <span className="truncate text-zinc-200">{text}</span>
+                  </button>
+                </li>
+              );
+            })}
+        </ul>
+      </section>
+
       <BindingForm state={state} value={value} onChange={setValue} disabled={disabled} />
 
       <div className="flex gap-2">
@@ -89,34 +117,6 @@ export default function KeyInspector({
           </p>
         )
       )}
-
-      <section className="space-y-1">
-        <h3 className="text-xs font-medium text-zinc-400">他のレイヤーでのこのキー</h3>
-        <ul className="divide-y divide-zinc-800/60 rounded border border-zinc-800">
-          {state.keymap.layers
-            .filter((l) => l.index !== layer.index)
-            .map((l) => {
-              const b = l.bindings[pos];
-              const text = !b
-                ? "—"
-                : "text" in b.label
-                  ? pretty(b.label.text)
-                  : `${pretty(b.label.hold)} / ${pretty(b.label.tap)}`;
-              return (
-                <li key={l.id}>
-                  <button
-                    onClick={() => onSelectLayer(l.index)}
-                    className="flex w-full items-center gap-2 px-2 py-1 text-left text-xs hover:bg-zinc-800"
-                  >
-                    <span className="w-5 font-mono text-zinc-500">{l.index}</span>
-                    <span className="w-24 truncate text-zinc-400">{layerLabel(l)}</span>
-                    <span className="truncate text-zinc-200">{text}</span>
-                  </button>
-                </li>
-              );
-            })}
-        </ul>
-      </section>
     </>
   );
 }
