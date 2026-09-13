@@ -82,7 +82,7 @@ export default function Keyboard({
   ].join(" ");
 
   return (
-    <div className="min-h-0 overflow-auto p-4">
+    <div className="min-h-0 min-w-0 overflow-auto p-4">
       <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet" className="h-full w-full">
         {boxes.map((b) => {
           const binding: Binding | undefined = layer.bindings[b.pos];

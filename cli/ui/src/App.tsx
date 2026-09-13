@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getState } from "./api";
 import Keyboard from "./components/Keyboard";
+import KeyEditor from "./components/KeyEditor";
 import LayerSidebar from "./components/LayerSidebar";
 import Toast from "./components/Toast";
 import TopBar from "./components/TopBar";
@@ -51,9 +52,23 @@ export default function App() {
           selected={selPos}
           onSelect={setSelPos}
         />
-        <aside className="border-l border-zinc-800 p-4 text-sm text-zinc-400">
-          キーをクリックすると編集できます
-        </aside>
+        {selPos !== null ? (
+          <KeyEditor
+            state={state}
+            layer={layer}
+            pos={selPos}
+            disabled={locked}
+            onApplied={() => {
+              setToast("適用しました");
+              void refetch();
+            }}
+            onError={setToast}
+          />
+        ) : (
+          <aside className="min-w-0 border-l border-zinc-800 p-4 text-sm text-zinc-400">
+            キーをクリックすると編集できます
+          </aside>
+        )}
       </div>
       <Toast message={toast} onDone={() => setToast(null)} />
     </div>

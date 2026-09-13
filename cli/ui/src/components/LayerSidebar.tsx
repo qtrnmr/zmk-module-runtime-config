@@ -11,7 +11,7 @@ export default function LayerSidebar({
   onSelect(index: number): void;
 }) {
   return (
-    <nav className="overflow-y-auto border-r border-zinc-800 p-2">
+    <nav className="min-w-0 overflow-y-auto border-r border-zinc-800 p-2">
       <h2 className="px-2 pb-2 text-xs font-semibold tracking-wide text-zinc-500">レイヤー</h2>
       <ul className="space-y-0.5">
         {layers.map((l) => (
