@@ -189,6 +189,28 @@ def test_collect_combos_labels_the_binding():
     assert e["timeout_ms"] == 50 and e["layers"] == []
 
 
+def test_collect_combos_marks_an_untouched_devicetree_binding():
+    """roBa reports behavior_id 0 for every combo it has never overridden at
+    runtime (make_binding() in src/runtime_combo.c falls back to the const DT
+    binding when local_id is 0). Live behavior ids start at 1, so the generic
+    unknown-behavior label '#0 458795 0' would misread that as a broken id."""
+    count = cb_pb2.Response()
+    count.count.count = 1
+    got = cb_pb2.Response()
+    info = got.get.info
+    info.index = 0
+    info.key_positions.extend([11, 10])
+    info.binding.behavior_id = 0
+    info.binding.param1 = 458795
+    info.found = True
+    out = F.collect_combos(_session([
+        _subsystems("zmk__combos"),
+        _call(count.SerializeToString()),
+        _call(got.SerializeToString()),
+    ]), BY_ID, LAYERS, REV)
+    assert out["entries"][0]["binding"]["label"] == F.DT_DEFAULT_LABEL
+
+
 # ---- encoder --------------------------------------------------------------
 def test_collect_encoder_labels_both_directions():
     sensors = rsr_pb2.Response()
@@ -214,6 +236,23 @@ def test_collect_encoder_labels_both_directions():
     assert layer0["layer"] == 0
     assert layer0["cw"]["label"] == {"text": "A", "behavior": "Key Press"}
     assert layer0["ccw"]["tap_ms"] == 20
+
+
+def test_collect_encoder_marks_an_unconfigured_layer_as_devicetree_default():
+    """roBa's second encoder reports an all-zero binding on every layer."""
+    sensors = rsr_pb2.Response()
+    s = sensors.get_sensors.sensors.add()
+    s.index, s.name = 1, "encoder_right"
+    got = rsr_pb2.Response()
+    got.get_all_layer_bindings.bindings.add().layer = 0
+    out = F.collect_encoder(_session([
+        _subsystems("cormoran_rsr"),
+        _call(sensors.SerializeToString()),
+        _call(got.SerializeToString()),
+    ]), BY_ID, LAYERS, REV)
+    layer0 = out["bindings"][0]["layers"][0]
+    assert layer0["cw"]["label"] == F.DT_DEFAULT_LABEL
+    assert layer0["ccw"]["label"] == F.DT_DEFAULT_LABEL
 
 
 # ---- trackball ------------------------------------------------------------

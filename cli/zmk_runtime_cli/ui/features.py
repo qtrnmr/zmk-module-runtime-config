@@ -17,8 +17,23 @@ from . import labels, state
 MACRO_SLOTS_PROBE = 64
 
 
+#: Combos and encoder bindings report behavior_id 0 for "never overridden at
+#: runtime, still the devicetree binding" — see make_binding() in
+#: src/runtime_combo.c, which uses the const DT binding when local_id is 0. It
+#: is not a behavior id (live ids start at 1), so label_for's unknown-behavior
+#: fallback ("#0 458795 0" / behavior "?") would be actively misleading.
+DT_DEFAULT_LABEL = {"text": "DT 既定", "behavior": "devicetree"}
+
+
 def _unavailable(exc: Exception) -> dict:
     return {"available": False, "error": f"{type(exc).__name__}: {exc}"}
+
+
+def binding_label(binding: dict, by_id: dict, layers_by_index: dict, rev: dict) -> dict:
+    if binding["behavior_id"] == 0:
+        return dict(DT_DEFAULT_LABEL)
+    return labels.label_for(binding, by_id.get(binding["behavior_id"]),
+                            layers_by_index, rev)
 
 
 def _macro_slot_exists(client, slot: int) -> bool:
@@ -93,8 +108,7 @@ def collect_combos(session, by_id, layers_by_index, rev) -> dict:
         for r in session.combos_client().list():
             info = r["info"]
             b = info["binding"]
-            b["label"] = labels.label_for(b, by_id.get(b["behavior_id"]),
-                                          layers_by_index, rev)
+            b["label"] = binding_label(b, by_id, layers_by_index, rev)
             entries.append(info)
         return {"available": True, "entries": entries}
     except Exception as exc:  # noqa: BLE001
@@ -112,8 +126,7 @@ def collect_encoder(session, by_id, layers_by_index, rev) -> dict:
             for lb in layers:
                 for d in ("cw", "ccw"):
                     b = lb[d]
-                    b["label"] = labels.label_for(b, by_id.get(b["behavior_id"]),
-                                                  layers_by_index, rev)
+                    b["label"] = binding_label(b, by_id, layers_by_index, rev)
             bindings.append({"sensor": s["index"], "layers": layers})
         return {"available": True, "sensors": sensors, "bindings": bindings}
     except Exception as exc:  # noqa: BLE001
