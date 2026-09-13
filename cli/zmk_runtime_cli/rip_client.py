@@ -58,6 +58,33 @@ FIELD_SPECS = {
 }
 
 
+# One row per FIELD_SPECS key, in the same order, telling a form generator which
+# control to render and which InputProcessorInfo field holds the current value.
+# `kind` "layer" is an int the UI shows as a layer select; "enum" values are sent
+# back as the option *string* (FIELD_SPECS parses them), while info_to_dict
+# reports the enum's int, so the UI indexes `options` with it.
+FIELD_UI = [
+    {"name": "scale-multiplier", "kind": "int", "info_key": "scale_multiplier"},
+    {"name": "scale-divisor", "kind": "int", "info_key": "scale_divisor"},
+    {"name": "rotation", "kind": "int", "info_key": "rotation_degrees"},
+    {"name": "x-invert", "kind": "bool", "info_key": "x_invert"},
+    {"name": "y-invert", "kind": "bool", "info_key": "y_invert"},
+    {"name": "xy-swap", "kind": "bool", "info_key": "xy_swap_enabled"},
+    {"name": "xy-to-scroll", "kind": "bool", "info_key": "xy_to_scroll_enabled"},
+    {"name": "axis-snap-mode", "kind": "enum", "options": ["none", "x", "y"],
+     "info_key": "axis_snap_mode"},
+    {"name": "axis-snap-threshold", "kind": "int", "info_key": "axis_snap_threshold"},
+    {"name": "axis-snap-timeout", "kind": "int", "info_key": "axis_snap_timeout_ms"},
+    {"name": "temp-layer-enabled", "kind": "bool", "info_key": "temp_layer_enabled"},
+    {"name": "temp-layer-layer", "kind": "layer", "info_key": "temp_layer_layer"},
+    {"name": "temp-layer-activation-delay", "kind": "int",
+     "info_key": "temp_layer_activation_delay_ms"},
+    {"name": "temp-layer-deactivation-delay", "kind": "int",
+     "info_key": "temp_layer_deactivation_delay_ms"},
+    {"name": "active-layers", "kind": "int", "info_key": "active_layers"},
+]
+
+
 def build_set_request(field: str, id: int, raw_value: str) -> "rip_pb2.Request":
     if field not in FIELD_SPECS:
         raise ValueError(f"unknown field {field!r}. known: {sorted(FIELD_SPECS)}")

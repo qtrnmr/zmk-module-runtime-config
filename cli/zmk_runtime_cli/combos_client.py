@@ -232,5 +232,15 @@ class CombosClient:
             req = build_set_request(index, field, value)
         return decode_response(self._call(req))
 
+    def set_binding(self, index: int, behavior_id: int, p1: int, p2: int) -> dict:
+        """Set a combo binding from raw ids (no spec string, no behavior lookup).
+
+        The browser already knows every behavior id from /api/state, so it sends
+        them directly; `set(index, 'binding', spec)` stays for the CLI.
+        """
+        return decode_response(self._call(
+            build_set_request(index, "binding", None,
+                              behavior_id=behavior_id, p1=p1, p2=p2)))
+
     def reset(self, index: int) -> dict:
         return decode_response(self._call(build_reset_request(index)))

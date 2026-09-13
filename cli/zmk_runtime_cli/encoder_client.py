@@ -223,6 +223,16 @@ class EncoderClient:
         return decode_response(self._call(
             build_set_request(direction, sensor, layer, behavior_id, param1, param2, tms)))
 
+    def set_raw(self, sensor: int, layer: int, direction: str, behavior_id: int,
+                p1: int, p2: int, tap_ms: int) -> dict:
+        """Set one direction of one layer from raw ids (no spec string parsing).
+
+        The browser picks the behavior from /api/state, so it already has the
+        local id; `set(...)` with a 'kp'/'msc'/'raw' spec stays for the CLI.
+        """
+        return decode_response(self._call(
+            build_set_request(direction, sensor, layer, behavior_id, p1, p2, tap_ms)))
+
     def reset(self, sensor: int, layer: int) -> dict:
         """Revert a layer: set cw and ccw behavior_id 0 -> DT-default fallback."""
         cw = decode_response(self._call(
