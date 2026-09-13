@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import argparse
-import datetime as _dt
 import json
 import sys
 from pathlib import Path
 
+from . import backup
+from .backup import BACKUP_LOG, append_backup as _append_backup  # noqa: F401
 from . import behaviors
 from . import connection
 from . import macro_dsl
@@ -21,15 +22,6 @@ from .combos_client import CombosClient
 
 def _emit(obj: dict) -> None:
     print(json.dumps(obj, ensure_ascii=False))
-
-
-BACKUP_LOG = Path(__file__).resolve().parent.parent / ".zmkrt-backup.jsonl"
-
-
-def _append_backup(entry: dict) -> None:
-    entry["ts"] = _dt.datetime.now().isoformat(timespec="seconds")
-    with BACKUP_LOG.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
 def cmd_key_get(args: argparse.Namespace) -> int:
@@ -112,8 +104,7 @@ def cmd_reset(args: argparse.Namespace) -> int:
 def cmd_snapshot(args: argparse.Namespace) -> int:
     client = connection.open(args.port)
     data = client.get_keymap_bytes()
-    out = Path(args.path) if args.path else (
-        BACKUP_LOG.parent / f"keymap-snapshot-{_dt.datetime.now():%Y%m%d-%H%M%S}.bin")
+    out = Path(args.path) if args.path else backup.snapshot_path()
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(data)
     _emit({"snapshot": str(out), "bytes": len(data),

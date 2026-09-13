@@ -114,13 +114,18 @@ def decode_status(km_resp: "keymap_pb2.Response") -> dict:
 
 
 class KeymapClient:
-    def __init__(self, port: str | None = None, baud: int = rpc.DEFAULT_BAUD):
-        target = port or rpc.find_port()
-        self._ser = serial.Serial(target, baud, timeout=0.1)
+    def __init__(self, port: str | None = None, baud: int = rpc.DEFAULT_BAUD, _ser=None):
+        if _ser is not None:
+            self._ser = _ser
+        else:
+            target = port or rpc.find_port()
+            self._ser = serial.Serial(target, baud, timeout=0.1)
         self._rid = 0
+        self._owns_serial = _ser is None
 
     def close(self) -> None:
-        self._ser.close()
+        if self._owns_serial:
+            self._ser.close()
 
     def __enter__(self) -> "KeymapClient":
         return self

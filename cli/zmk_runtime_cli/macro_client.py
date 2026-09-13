@@ -21,13 +21,18 @@ from . import rpc
 class MacroClient:
     """Open the serial port and perform macro get/set over the custom-envelope RPC."""
 
-    def __init__(self, port: str | None = None, baud: int = rpc.DEFAULT_BAUD):
-        target = port or rpc.find_port()
-        self._ser = serial.Serial(target, baud, timeout=0.1)
+    def __init__(self, port: str | None = None, baud: int = rpc.DEFAULT_BAUD, _ser=None):
+        if _ser is not None:
+            self._ser = _ser
+        else:
+            target = port or rpc.find_port()
+            self._ser = serial.Serial(target, baud, timeout=0.1)
         self._subsystem_index: int | None = None
+        self._owns_serial = _ser is None
 
     def close(self) -> None:
-        self._ser.close()
+        if self._owns_serial:
+            self._ser.close()
 
     def __enter__(self) -> "MacroClient":
         return self
