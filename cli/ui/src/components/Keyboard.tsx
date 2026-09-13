@@ -123,8 +123,8 @@ export default function Keyboard({
   const viewBox = [minX - PAD, minY - PAD, maxX - minX + PAD * 2, maxY - minY + PAD * 2].join(" ");
 
   return (
-    <div className="h-full w-full p-4">
-      <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet" className="h-full w-full">
+    <div className="h-full w-full px-4 pt-2 pb-4">
+      <svg viewBox={viewBox} preserveAspectRatio="xMidYMin meet" className="h-full w-full">
         <defs>
           <filter id="capShadow" x="-10%" y="-10%" width="120%" height="130%">
             <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodColor="#000" floodOpacity="0.55" />
