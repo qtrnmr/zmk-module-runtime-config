@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
 import { labelText } from "../board";
 import type { EncoderLayer, Selection } from "../types";
+import type { TipHandlers } from "./Tooltip";
 
 /** The encoder, drawn as a knob with its two directions captioned. */
 export default function EncoderKnob({
@@ -10,6 +12,8 @@ export default function EncoderKnob({
   layerBinding,
   selected,
   onSelect,
+  tip,
+  tipContent,
 }: {
   cx: number;
   cy: number;
@@ -18,10 +22,17 @@ export default function EncoderKnob({
   layerBinding: EncoderLayer | undefined;
   selected: boolean;
   onSelect(sel: Selection): void;
+  tip: TipHandlers;
+  tipContent: ReactNode;
 }) {
   return (
-    <g className="cursor-pointer" onClick={() => onSelect({ kind: "encoder", sensor })}>
-      <title>{`エンコーダ ${sensor}`}</title>
+    <g
+      className="cursor-pointer"
+      onClick={() => onSelect({ kind: "encoder", sensor })}
+      onMouseEnter={(e) => tip.show(e, tipContent)}
+      onMouseMove={(e) => tip.show(e, tipContent)}
+      onMouseLeave={tip.hide}
+    >
       <circle
         cx={cx}
         cy={cy}

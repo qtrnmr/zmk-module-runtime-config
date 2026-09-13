@@ -1,6 +1,8 @@
+import type { ReactNode } from "react";
 import { comboPath, labelText } from "../board";
 import type { KeyBox } from "../geometry";
 import type { ComboEntry, Selection } from "../types";
+import type { TipHandlers } from "./Tooltip";
 
 /** Combos drawn on the board: a polyline through the keys they listen on and
  *  a pill at the centroid showing what the combo actually does. */
@@ -11,6 +13,8 @@ export default function ComboOverlay({
   hoverIndex,
   onHover,
   onSelect,
+  tip,
+  tipFor,
 }: {
   combos: ComboEntry[];
   boxes: KeyBox[];
@@ -18,6 +22,8 @@ export default function ComboOverlay({
   hoverIndex: number | null;
   onHover(index: number | null): void;
   onSelect(sel: Selection): void;
+  tip: TipHandlers;
+  tipFor(c: ComboEntry): ReactNode;
 }) {
   return (
     <g>
@@ -31,11 +37,17 @@ export default function ComboOverlay({
           <g
             key={c.index}
             className="cursor-pointer"
-            onMouseEnter={() => onHover(c.index)}
-            onMouseLeave={() => onHover(null)}
+            onMouseEnter={(e) => {
+              onHover(c.index);
+              tip.show(e, tipFor(c));
+            }}
+            onMouseMove={(e) => tip.show(e, tipFor(c))}
+            onMouseLeave={() => {
+              onHover(null);
+              tip.hide();
+            }}
             onClick={() => onSelect({ kind: "combo", index: c.index })}
           >
-            <title>{`コンボ ${c.index} · ${label}`}</title>
             <polyline
               points={points.map(([x, y]) => `${x},${y}`).join(" ")}
               fill="none"

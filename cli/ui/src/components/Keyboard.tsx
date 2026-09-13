@@ -1,12 +1,25 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { bounds, toBoxes, UNIT } from "../geometry";
-import { encoderLayerBinding } from "../board";
+import { encoderLayerBinding, labelText } from "../board";
 import type { Decor } from "../decor";
+import { BEHAVIOR_HELP, paramLines } from "../help";
+import { reverseKeycodes } from "../macroFormat";
 import { pretty } from "../prettyKeycode";
-import type { Binding, ComboEntry, Encoder, Label, Layer, LayoutKey, Selection } from "../types";
+import type {
+  Behavior,
+  Binding,
+  ComboEntry,
+  Encoder,
+  Label,
+  Layer,
+  LayoutKey,
+  Selection,
+} from "../types";
+import { layerLabel } from "../types";
 import ComboOverlay from "./ComboOverlay";
 import EncoderKnob from "./EncoderKnob";
 import TrackballDecor from "./TrackballDecor";
+import { useTooltip } from "./Tooltip";
 
 const PAD = 14;
 /** Behaviors whose name adds nothing over the label itself. */
@@ -63,6 +76,25 @@ function KeyLabel({ label, dim }: { label: Label; dim?: boolean }) {
   );
 }
 
+/** The dark lines every board tooltip is built from. */
+function TipHead({ children }: { children: ReactNode }) {
+  return <p className="font-medium text-zinc-100">{children}</p>;
+}
+function TipRaw({ children }: { children: ReactNode }) {
+  return <p className="pt-0.5 font-mono text-[10px] text-zinc-500">{children}</p>;
+}
+
+/** behaviour name + what it does, shared by keys, combos and the encoder. */
+function TipBehavior({ name }: { name?: string }) {
+  if (!name) return null;
+  return (
+    <>
+      <p className="text-sky-300">{name}</p>
+      {BEHAVIOR_HELP[name] && <p className="text-zinc-400">{BEHAVIOR_HELP[name]}</p>}
+    </>
+  );
+}
+
 export default function Keyboard({
   layout,
   layer,
@@ -76,6 +108,9 @@ export default function Keyboard({
   hoverCombo,
   onHoverCombo,
   onTrackball,
+  behaviors,
+  keycodes,
+  layers,
 }: {
   layout: { name: string; keys: LayoutKey[] };
   layer: Layer;
@@ -90,9 +125,76 @@ export default function Keyboard({
   hoverCombo: number | null;
   onHoverCombo(index: number | null): void;
   onTrackball(): void;
+  /** Only for the hover tooltip: what a behaviour id and its params mean. */
+  behaviors: Behavior[];
+  keycodes: Record<string, number>;
+  layers: Layer[];
 }) {
   const boxes = useMemo(() => toBoxes(layout.keys), [layout.keys]);
   const bb = useMemo(() => bounds(boxes), [boxes]);
+  const tip = useTooltip();
+  const byId = useMemo(() => new Map(behaviors.map((b) => [b.id, b])), [behaviors]);
+  const rev = useMemo(() => reverseKeycodes(keycodes), [keycodes]);
+
+  /** What a binding does, in the four lines the tooltip promises. */
+  const bindingTip = (
+    binding: { behavior_id: number; param1: number; param2: number },
+    label: Label | undefined,
+    head: ReactNode,
+  ) => {
+    const b = byId.get(binding.behavior_id);
+    return (
+      <>
+        {head}
+        <TipBehavior name={label?.behavior ?? b?.display_name} />
+        {paramLines(b, binding, layers, rev).map((l) => (
+          <p key={l} className="text-zinc-300">
+            {l}
+          </p>
+        ))}
+        <TipRaw>
+          #{binding.behavior_id} {binding.param1} {binding.param2}
+        </TipRaw>
+      </>
+    );
+  };
+
+  /** `S + A → Esc`, plus what decides whether it fires at all. */
+  const comboTip = (c: ComboEntry) => {
+    const keys = c.key_positions
+      .map((pos) => {
+        const l = base?.bindings[pos]?.label;
+        return !l ? "?" : "text" in l ? pretty(l.text) : pretty(l.tap);
+      })
+      .join(" + ");
+    const on = c.layers.length
+      ? c.layers
+          .map((i) => {
+            const l = layers.find((x) => x.index === i);
+            return l ? `${i} ${layerLabel(l)}` : String(i);
+          })
+          .join(", ")
+      : "全レイヤー";
+    return (
+      <>
+        <TipHead>
+          コンボ {c.index}: {keys} → {labelText(c.effective.label, "?")}
+        </TipHead>
+        <TipBehavior name={c.effective.label?.behavior} />
+        {paramLines(byId.get(c.effective.behavior_id), c.effective, layers, rev).map((l) => (
+          <p key={l} className="text-zinc-300">
+            {l}
+          </p>
+        ))}
+        <p className="text-zinc-400">
+          timeout {c.timeout_ms}ms · 有効レイヤー: {on}
+        </p>
+        <TipRaw>
+          #{c.effective.behavior_id} {c.effective.param1} {c.effective.param2}
+        </TipRaw>
+      </>
+    );
+  };
 
   const selPos = selection?.kind === "key" ? selection.pos : null;
   const selCombo = selection?.kind === "combo" ? selection.index : null;
@@ -124,6 +226,7 @@ export default function Keyboard({
 
   return (
     <div className="h-full w-full px-4 pt-2 pb-4">
+      {tip.node}
       <svg viewBox={viewBox} preserveAspectRatio="xMidYMin meet" className="h-full w-full">
         <defs>
           <filter id="capShadow" x="-10%" y="-10%" width="120%" height="130%">
@@ -139,14 +242,28 @@ export default function Keyboard({
           const ghost = transparent ? base.bindings[b.pos]?.label : undefined;
           const isSel = selPos === b.pos;
           const isLit = lit.has(b.pos);
+          // A ▽ key says what it inherits; everything else states its own label.
+          const head = transparent ? (
+            <TipHead>▽ → ベース層: {labelText(ghost)}</TipHead>
+          ) : "text" in label ? (
+            <TipHead>{pretty(label.text)}</TipHead>
+          ) : (
+            <>
+              <TipHead>hold: {pretty(label.hold)}</TipHead>
+              <TipHead>tap: {pretty(label.tap)}</TipHead>
+            </>
+          );
+          const content = bindingTip(binding, label, head);
           return (
             <g
               key={b.pos}
               transform={`rotate(${b.deg} ${b.cx} ${b.cy})`}
               onClick={() => onSelect({ kind: "key", pos: b.pos })}
+              onMouseEnter={(e) => tip.show(e, content)}
+              onMouseMove={(e) => tip.show(e, content)}
+              onMouseLeave={tip.hide}
               className="group cursor-pointer"
             >
-              <title>{`pos ${b.pos} · ${label.behavior} · #${binding.behavior_id} ${binding.param1} ${binding.param2}`}</title>
               <rect
                 x={b.x}
                 y={b.y}
@@ -204,21 +321,44 @@ export default function Keyboard({
             hoverIndex={hoverCombo}
             onHover={onHoverCombo}
             onSelect={onSelect}
+            tip={tip}
+            tipFor={comboTip}
           />
         )}
 
-        {(decor?.encoders ?? []).map((e) => (
-          <EncoderKnob
-            key={e.sensor}
-            cx={e.cx * UNIT}
-            cy={e.cy * UNIT}
-            r={e.r * UNIT}
-            sensor={e.sensor}
-            layerBinding={encoder ? encoderLayerBinding(encoder, e.sensor, layer.index) : undefined}
-            selected={selSensor === e.sensor}
-            onSelect={onSelect}
-          />
-        ))}
+        {(decor?.encoders ?? []).map((e) => {
+          const lb = encoder ? encoderLayerBinding(encoder, e.sensor, layer.index) : undefined;
+          return (
+            <EncoderKnob
+              key={e.sensor}
+              cx={e.cx * UNIT}
+              cy={e.cy * UNIT}
+              r={e.r * UNIT}
+              sensor={e.sensor}
+              layerBinding={lb}
+              selected={selSensor === e.sensor}
+              onSelect={onSelect}
+              tip={tip}
+              tipContent={
+                <>
+                  <TipHead>
+                    エンコーダ {e.sensor} · レイヤー {layer.index} {layerLabel(layer)}
+                  </TipHead>
+                  {lb ? (
+                    <>
+                      <p className="text-zinc-300">↻ cw: {labelText(lb.cw.label)}</p>
+                      <p className="text-zinc-300">↺ ccw: {labelText(lb.ccw.label)}</p>
+                      <TipBehavior name={lb.cw.label?.behavior} />
+                      <TipRaw>tap_ms {lb.cw.tap_ms}</TipRaw>
+                    </>
+                  ) : (
+                    <p className="text-zinc-400">このレイヤーには sensor-bindings がありません</p>
+                  )}
+                </>
+              }
+            />
+          );
+        })}
 
         {decor?.trackball && (
           <TrackballDecor
@@ -226,6 +366,13 @@ export default function Keyboard({
             cy={decor.trackball.cy * UNIT}
             r={decor.trackball.r * UNIT}
             onClick={onTrackball}
+            tip={tip}
+            tipContent={
+              <>
+                <TipHead>トラックボール</TipHead>
+                <p className="text-zinc-400">クリックで設定 (速度・反転・軸スナップ・一時レイヤー)。</p>
+              </>
+            }
           />
         )}
       </svg>

@@ -5,6 +5,12 @@ import { createPortal } from "react-dom";
  *  enough that it never feels like the browser's own `<title>` delay. */
 const DELAY_MS = 150;
 
+/** What a component needs to drive one owner's tooltip from its own events. */
+export interface TipHandlers {
+  show(e: { clientX: number; clientY: number }, content: ReactNode): void;
+  hide(): void;
+}
+
 interface Tip {
   x: number;
   y: number;

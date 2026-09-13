@@ -198,6 +198,9 @@ export default function App() {
                     : []
                 }
                 showCombos={showCombos}
+                behaviors={state.behaviors}
+                keycodes={state.keycodes}
+                layers={state.keymap.layers}
                 encoder={features?.encoder ?? null}
                 decor={decorFor(state.layout)}
                 hoverCombo={hoverCombo}
