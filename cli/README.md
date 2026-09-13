@@ -39,6 +39,20 @@ The `zmkrt` command provides the following command groups:
 - `trackball` — Trackball config: `get` / `set` / `reset` (requires `zmk-module-runtime-input-processor`)
 - `reset` — Reset all settings to devicetree defaults
 - `snapshot [path]` — Save raw keymap bytes to a file (record-only; not a lock/unlock operation)
+- `ui` — Open the browser UI (local HTTP server; see below)
+
+### Browser UI
+
+`zmkrt ui` starts a local server on http://127.0.0.1:8760 and opens your browser. It shows the live
+keymap on the keyboard's physical layout and lets you edit key bindings and layers. The server holds the
+USB serial port while running, so other `zmkrt` commands must wait until you stop it (Ctrl-C).
+Every change is logged to `.zmkrt-backup.jsonl`; a keymap snapshot is written on start.
+
+```bash
+zmkrt ui                 # open http://127.0.0.1:8760 in the browser
+zmkrt ui --no-open       # start the server only (for `pnpm dev` in cli/ui)
+zmkrt ui --http-port 9000
+```
 
 ### Port detection
 

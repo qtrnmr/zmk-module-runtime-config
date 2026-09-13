@@ -101,6 +101,12 @@ def cmd_reset(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ui(args: argparse.Namespace) -> int:
+    from .ui.server import serve
+    serve(port=args.port, http_port=args.http_port, open_browser=not args.no_open)
+    return 0
+
+
 def cmd_snapshot(args: argparse.Namespace) -> int:
     client = connection.open(args.port)
     data = client.get_keymap_bytes()
@@ -481,6 +487,13 @@ def build_parser() -> argparse.ArgumentParser:
     snap = sub.add_parser("snapshot", help="Save raw keymap bytes for record")
     snap.add_argument("path", nargs="?", default=None)
     snap.set_defaults(func=cmd_snapshot)
+    ui = sub.add_parser(
+        "ui",
+        help="Open the browser UI (local HTTP server; holds the serial port while running)")
+    ui.add_argument("--http-port", type=int, default=8760)
+    ui.add_argument("--no-open", action="store_true",
+                    help="do not open the browser automatically")
+    ui.set_defaults(func=cmd_ui)
     return parser
 
 

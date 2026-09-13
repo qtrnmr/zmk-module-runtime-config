@@ -16,6 +16,9 @@ dev = ["pytest"]
 [tool.setuptools.packages.find]
 include = ["zmk_runtime_cli*"]
 
+[tool.setuptools.package-data]
+zmk_runtime_cli = ["ui/static/**/*"]
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
