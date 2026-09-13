@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* The inspector slides in from the right when something on the board is selected. */
+@keyframes slideIn {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}

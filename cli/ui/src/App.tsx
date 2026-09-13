@@ -4,8 +4,8 @@ import { activeCombos } from "./board";
 import { decorFor } from "./decor";
 import ChangeLog from "./components/ChangeLog";
 import ConfirmDialog from "./components/ConfirmDialog";
+import Inspector from "./components/Inspector";
 import Keyboard from "./components/Keyboard";
-import KeyEditor from "./components/KeyEditor";
 import LayerChips, { type RemovedLayer } from "./components/LayerChips";
 import Rail from "./components/Rail";
 import Toast from "./components/Toast";
@@ -124,8 +124,6 @@ export default function App() {
     }
   };
 
-  const selPos = selection?.kind === "key" ? selection.pos : null;
-
   return (
     <div className="grid h-screen grid-cols-[56px_1fr_auto] bg-zinc-950 text-zinc-100">
       <Rail
@@ -134,6 +132,14 @@ export default function App() {
         onLog={() => setLogOpen(true)}
         onSnapshot={() => void doSnapshot()}
         onReset={() => setResetOpen(true)}
+        onEncoder={
+          features?.encoder.available && !decorFor(state.layout)?.encoders.length
+            ? () => {
+                setTab("keymap");
+                setSelection({ kind: "encoder", sensor: features.encoder.available ? features.encoder.sensors[0]?.index ?? 0 : 0 });
+              }
+            : undefined
+        }
         busy={busy}
       />
 
@@ -210,17 +216,17 @@ export default function App() {
         )}
       </div>
 
-      {selPos !== null ? (
-        <KeyEditor
+      {selection ? (
+        <Inspector
+          selection={selection}
           state={state}
+          features={features}
           layer={layer}
-          pos={selPos}
           disabled={!!locked || busy}
-          onApplied={() => {
-            setToast("適用しました");
-            void refetch();
-          }}
-          onError={setToast}
+          run={run}
+          onClose={() => setSelection(null)}
+          onSelectLayer={setLayerIdx}
+          onSelect={setSelection}
         />
       ) : (
         <div />
