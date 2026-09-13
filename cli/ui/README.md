@@ -37,7 +37,8 @@ A build with no source change must produce no diff.
 ## Test
 
 ```bash
-pnpm test                   # vitest: geometry (layout maths), prettyKeycode (label display)
+pnpm test                   # vitest: geometry (layout maths), prettyKeycode and
+                            # macroFormat (label display), params (modifier bits)
 ```
 
 ## Layout of the source
@@ -45,9 +46,12 @@ pnpm test                   # vitest: geometry (layout maths), prettyKeycode (la
 | File | Role |
 |---|---|
 | `src/api.ts` | typed fetch wrappers for every `/api/...` route; throws `ApiError` |
-| `src/types.ts` | the shape of `GET /api/state`, plus `layerLabel()` |
+| `src/types.ts` | the shape of `GET /api/state` and `GET /api/features`, the tab list, `layerLabel()` |
+| `src/macroFormat.ts` | macro step preview line and client-side keycode naming |
 | `src/geometry.ts` | Studio layout units (1/100 key, 1/100 degree) -> px boxes + bounds |
 | `src/prettyKeycode.ts` | canonical ZMK keycode name -> key-cap text |
 | `src/components/Keyboard.tsx` | the SVG keyboard on the device's real physical layout |
-| `src/components/KeyEditor.tsx` | behaviour picker + metadata-driven parameter forms |
+| `src/components/BindingForm.tsx` | behaviour picker + metadata-driven parameter forms (shared) |
+| `src/components/KeyEditor.tsx` | the keymap tab's editor: current binding + `BindingForm` |
 | `src/components/LayerSidebar.tsx` | layer list, rename, reorder, add/remove/restore |
+| `src/panels/*.tsx` | one panel per feature tab (macro, hold-tap, condlayer, combo, encoder, trackball); `ui.tsx` holds the shared shell and form primitives |

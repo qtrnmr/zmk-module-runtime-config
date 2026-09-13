@@ -12,6 +12,7 @@ import CondlayerPanel from "./panels/CondlayerPanel";
 import EncoderPanel from "./panels/EncoderPanel";
 import HoldtapPanel from "./panels/HoldtapPanel";
 import MacroPanel from "./panels/MacroPanel";
+import TrackballPanel from "./panels/TrackballPanel";
 import type { Features, Layer, State, Tab } from "./types";
 
 export default function App() {
@@ -226,6 +227,8 @@ function FeaturePanel({
       return <ComboPanel {...props} />;
     case "encoder":
       return <EncoderPanel {...props} />;
+    case "trackball":
+      return <TrackballPanel {...props} />;
     default:
       return (
         <div className="min-h-0 overflow-y-auto p-4 text-sm text-zinc-400">

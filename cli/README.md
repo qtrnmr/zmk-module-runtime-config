@@ -43,10 +43,25 @@ The `zmkrt` command provides the following command groups:
 
 ### Browser UI
 
-`zmkrt ui` starts a local server on http://127.0.0.1:8760 and opens your browser. It shows the live
-keymap on the keyboard's physical layout and lets you edit key bindings and layers. The server holds the
+`zmkrt ui` starts a local server on http://127.0.0.1:8760 and opens your browser. The server holds the
 USB serial port while running, so other `zmkrt` commands must wait until you stop it (Ctrl-C).
 Every change is logged to `.zmkrt-backup.jsonl`; a keymap snapshot is written on start.
+
+Tabs, one per runtime-editable feature:
+
+| Tab | Edits |
+|---|---|
+| キーマップ | Key bindings on the physical layout, plus layer add/rename/move/remove/restore |
+| マクロ | Macro slots: a step table (tap/press/release, keycode, wait, tap) and a DSL import |
+| Hold-tap | `tapping-term-ms`, `quick-tap-ms`, `require-prior-idle-ms`, flavor per slot |
+| 条件レイヤー | if-layers / then-layer per entry |
+| コンボ | Binding, timeout, prior-idle, active layers, slow-release (hovering a row lights its keys) |
+| エンコーダ | cw / ccw binding and `tap_ms` per sensor and layer |
+| トラックボール | Every input-processor field (scale, rotation, invert, axis-snap, temp-layer) |
+
+A tab whose custom RPC subsystem the keyboard does not ship says so instead of showing a form.
+Counts that are fixed at build time — macro slots, hold-tap and conditional-layer slots, combo
+key-positions — are read-only, with the reason shown.
 
 ```bash
 zmkrt ui                 # open http://127.0.0.1:8760 in the browser

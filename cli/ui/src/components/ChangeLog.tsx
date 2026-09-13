@@ -12,6 +12,29 @@ function summary(e: Entry): string {
   if (op.startsWith("ui_layer_")) return JSON.stringify(e.args ?? {});
   if (op === "ui_snapshot" || op === "ui_start") return String(e.path ?? "");
   if (op === "ui_reset") return String(e.snapshot ?? "");
+
+  if (op === "ui_macro_set") {
+    const before = (e.before_steps as unknown[] | null)?.length ?? "?";
+    const now = (e.new_steps as unknown[] | undefined)?.length ?? 0;
+    return `slot ${e.slot}: ${before} → ${now} steps`;
+  }
+  if (op === "ui_holdtap_set") return `slot ${e.slot}: ${e.field}=${e.value}`;
+  if (op === "ui_holdtap_reset") return `slot ${e.slot}`;
+  if (op === "ui_condlayer_set")
+    return `entry ${e.index}: if ${JSON.stringify(e.if_layers ?? [])} → L${e.then_layer}`;
+  if (op === "ui_condlayer_reset") return `entry ${e.index}`;
+  if (op === "ui_combo_set") {
+    const b = e.binding as Record<string, number> | undefined;
+    return `combo ${e.index}: ${e.field}=${
+      e.field === "binding" && b ? `#${b.behavior_id} ${b.param1} ${b.param2}` : JSON.stringify(e.value)
+    }`;
+  }
+  if (op === "ui_combo_reset") return `combo ${e.index}`;
+  if (op === "ui_encoder_set")
+    return `sensor ${e.sensor} L${e.layer} ${e.direction} → #${e.behavior_id} ${e.param1} ${e.param2} tap=${e.tap_ms}`;
+  if (op === "ui_encoder_reset") return `sensor ${e.sensor} L${e.layer}`;
+  if (op === "ui_trackball_set") return `id ${e.id}: ${e.field}=${JSON.stringify(e.value)}`;
+  if (op === "ui_trackball_reset") return `id ${e.id}`;
   return "";
 }
 
