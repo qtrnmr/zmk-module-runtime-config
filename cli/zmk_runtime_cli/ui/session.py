@@ -7,7 +7,13 @@ import threading
 import serial
 
 from .. import rpc
+from ..combos_client import CombosClient
+from ..condlayer_client import CondlayerClient
+from ..encoder_client import EncoderClient
+from ..holdtap_client import HoldtapClient
 from ..keymap_client import KeymapClient
+from ..macro_client import MacroClient
+from ..rip_client import RipClient
 from .native_client import NativeClient
 
 
@@ -21,6 +27,9 @@ class DeviceSession:
         self.lock = threading.RLock()
         self._rid = 0
         self._behaviors: list[dict] | None = None
+        # Probed once per session by features.collect_macros (the macro RPC has
+        # no count call, so the slot count costs one round trip per slot).
+        self.macro_slot_count: int | None = None
 
     # -- serial lifecycle -------------------------------------------------
     @property
@@ -61,6 +70,26 @@ class DeviceSession:
 
     def keymap_client(self) -> KeymapClient:
         return KeymapClient(_ser=self.serial)
+
+    # Feature clients. All of them take the session's ONE serial handle; callers
+    # must already hold the session lock (the keyboard answers one RPC at a time).
+    def macro_client(self) -> MacroClient:
+        return MacroClient(_ser=self.serial)
+
+    def holdtap_client(self) -> HoldtapClient:
+        return HoldtapClient(_ser=self.serial)
+
+    def condlayer_client(self) -> CondlayerClient:
+        return CondlayerClient(_ser=self.serial)
+
+    def combos_client(self) -> CombosClient:
+        return CombosClient(_ser=self.serial)
+
+    def encoder_client(self) -> EncoderClient:
+        return EncoderClient(_ser=self.serial)
+
+    def rip_client(self) -> RipClient:
+        return RipClient(_ser=self.serial)
 
     def behaviors(self) -> list[dict]:
         if self._behaviors is None:
