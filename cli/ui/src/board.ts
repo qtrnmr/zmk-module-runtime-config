@@ -1,5 +1,12 @@
 import type { KeyBox } from "./geometry";
-import type { ComboEntry, Encoder, EncoderLayer, HoldtapSlot } from "./types";
+import { pretty } from "./prettyKeycode";
+import type { ComboEntry, Encoder, EncoderLayer, HoldtapSlot, Label } from "./types";
+
+/** One-line text for a label, for pills and knob captions. */
+export function labelText(label: Label | undefined, fallback = "—"): string {
+  if (!label) return fallback;
+  return "text" in label ? pretty(label.text) : `${pretty(label.hold)}/${pretty(label.tap)}`;
+}
 
 /** Centre of a cap after its rotation (matches the SVG `rotate(deg cx cy)`). */
 export function keyCenter(b: KeyBox): [number, number] {

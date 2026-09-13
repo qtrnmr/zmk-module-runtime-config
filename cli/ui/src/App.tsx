@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getFeatures, getState, layerOp, resetDevice, snapshot } from "./api";
+import { activeCombos } from "./board";
+import { decorFor } from "./decor";
 import ChangeLog from "./components/ChangeLog";
 import ConfirmDialog from "./components/ConfirmDialog";
 import Keyboard from "./components/Keyboard";
@@ -31,6 +33,7 @@ export default function App() {
   const [showCombos, setShowCombos] = useState(
     () => localStorage.getItem(SHOW_COMBOS_KEY) !== "0",
   );
+  const [hoverCombo, setHoverCombo] = useState<number | null>(null);
 
   useEffect(() => {
     localStorage.setItem(SHOW_COMBOS_KEY, showCombos ? "1" : "0");
@@ -180,8 +183,19 @@ export default function App() {
                 layout={state.layout}
                 layer={layer}
                 base={state.keymap.layers[0]}
-                selected={selPos}
-                onSelect={(pos) => setSelection({ kind: "key", pos })}
+                selection={selection}
+                onSelect={setSelection}
+                combos={
+                  features?.combos.available
+                    ? activeCombos(features.combos.entries, layer.index)
+                    : []
+                }
+                showCombos={showCombos}
+                encoder={features?.encoder ?? null}
+                decor={decorFor(state.layout)}
+                hoverCombo={hoverCombo}
+                onHoverCombo={setHoverCombo}
+                onTrackball={() => changeTab("trackball")}
               />
             </div>
           </div>
