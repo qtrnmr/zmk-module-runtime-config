@@ -85,6 +85,8 @@ export interface HoldtapSlot {
   flavor: string;
   flavor_index: number;
   found: boolean;
+  /** Local id of the behavior owning this slot; 0 on firmware without it. */
+  behavior_id: number;
 }
 
 export type Holdtaps = Unavailable | { available: true; flavors: string[]; slots: HoldtapSlot[] };
@@ -115,6 +117,10 @@ export interface ComboEntry {
   layers: number[];
   slow_release: boolean;
   found: boolean;
+  /** The devicetree binding; null on firmware that does not report it. */
+  dt_binding: RawBinding | null;
+  /** What the combo does right now: the runtime override, else dt_binding. */
+  effective: RawBinding;
 }
 
 export type Combos = Unavailable | { available: true; entries: ComboEntry[] };
@@ -157,17 +163,24 @@ export interface Features {
   trackball: Trackball;
 }
 
-export type Tab = "keymap" | "macro" | "holdtap" | "condlayer" | "combo" | "encoder" | "trackball";
+/** One key of the /api/features document, for partial refetches. */
+export type FeatureKey = keyof Features;
 
-export const TABS: { id: Tab; label: string }[] = [
-  { id: "keymap", label: "キーマップ" },
-  { id: "macro", label: "マクロ" },
-  { id: "holdtap", label: "Hold-tap" },
-  { id: "condlayer", label: "条件レイヤー" },
-  { id: "combo", label: "コンボ" },
-  { id: "encoder", label: "エンコーダ" },
-  { id: "trackball", label: "トラックボール" },
+/** Hold-tap, combos and the encoder are edited on the board, not on a page. */
+export type Tab = "keymap" | "macro" | "condlayer" | "trackball";
+
+export const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: "keymap", label: "キーマップ", icon: "⌨" },
+  { id: "macro", label: "マクロ", icon: "M" },
+  { id: "condlayer", label: "条件レイヤー", icon: "CL" },
+  { id: "trackball", label: "トラックボール", icon: "TB" },
 ];
+
+/** What the right-hand inspector is showing, if anything. */
+export type Selection =
+  | { kind: "key"; pos: number }
+  | { kind: "combo"; index: number }
+  | { kind: "encoder"; sensor: number };
 
 /** The behaviour of a binding the firmware has never overridden at runtime. */
 export const DT_DEFAULT_ID = 0;

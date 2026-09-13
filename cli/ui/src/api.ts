@@ -1,4 +1,4 @@
-import type { Binding, Features, MacroStep, OpResult, State } from "./types";
+import type { Binding, FeatureKey, Features, MacroStep, OpResult, State } from "./types";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -45,7 +45,13 @@ export const backupLog = (limit = 50) =>
 
 // ---- feature panels -------------------------------------------------------
 
-export const getFeatures = () => call<Features>("GET", "/api/features");
+/** Without `only`, the whole document (cast to Features by the caller).
+ *  With `only`, just those features — merged into the cached document. */
+export const getFeatures = (only?: FeatureKey[]) =>
+  call<Partial<Features>>(
+    "GET",
+    only?.length ? `/api/features?only=${only.join(",")}` : "/api/features",
+  );
 
 /** Parse the macro DSL server-side. Pure: touches no device. */
 export const macroParse = (dsl: string, allow_unbalanced = false) =>
