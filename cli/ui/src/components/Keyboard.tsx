@@ -64,13 +64,18 @@ export default function Keyboard({
   base,
   selected,
   onSelect,
+  highlight,
 }: {
   layout: { name: string; keys: LayoutKey[] };
   layer: Layer;
   base: Layer;
   selected: number | null;
   onSelect(pos: number): void;
+  /** Key positions to ring in amber, independent of `selected` — the combo tab
+   *  uses it to show which keys the hovered combo listens on. */
+  highlight?: number[];
 }) {
+  const lit = useMemo(() => new Set(highlight ?? []), [highlight]);
   const boxes = useMemo(() => toBoxes(layout.keys), [layout.keys]);
   const bb = useMemo(() => bounds(boxes), [boxes]);
   if (!boxes.length) return <div className="p-8 text-zinc-500">レイアウト情報がありません。</div>;
@@ -91,6 +96,7 @@ export default function Keyboard({
           const transparent = "text" in label && label.text === "▽";
           const ghost = transparent ? base.bindings[b.pos]?.label : undefined;
           const isSel = selected === b.pos;
+          const isLit = lit.has(b.pos);
           return (
             <g
               key={b.pos}
@@ -106,11 +112,11 @@ export default function Keyboard({
                 height={b.h}
                 rx={6}
                 className={
-                  (transparent ? "fill-zinc-900/60" : "fill-zinc-800") +
+                  (isLit ? "fill-amber-500/25" : transparent ? "fill-zinc-900/60" : "fill-zinc-800") +
                   " " +
-                  (isSel ? "stroke-sky-400" : "stroke-zinc-700")
+                  (isSel ? "stroke-sky-400" : isLit ? "stroke-amber-400" : "stroke-zinc-700")
                 }
-                strokeWidth={isSel ? 3 : 1}
+                strokeWidth={isSel || isLit ? 3 : 1}
               />
               <g transform={`translate(${b.x + b.w / 2} ${b.y + b.h / 2})`}>
                 {ghost ? <KeyLabel label={ghost} dim /> : <KeyLabel label={label} />}

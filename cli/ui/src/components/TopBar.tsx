@@ -1,4 +1,5 @@
-import type { State } from "../types";
+import type { State, Tab } from "../types";
+import { TABS } from "../types";
 
 export default function TopBar({
   state,
@@ -8,6 +9,8 @@ export default function TopBar({
   onToggleLog,
   logOpen,
   busy,
+  tab,
+  onTab,
 }: {
   state: State;
   onRefresh(): void;
@@ -16,10 +19,12 @@ export default function TopBar({
   onToggleLog(): void;
   logOpen: boolean;
   busy: boolean;
+  tab: Tab;
+  onTab(t: Tab): void;
 }) {
   const locked = state.device.lock_state === "LOCKED";
   return (
-    <header className="flex items-center gap-3 border-b border-zinc-800 bg-zinc-900/60 px-4 py-2">
+    <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-zinc-800 bg-zinc-900/60 px-4 py-2">
       <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" title="connected" />
       <h1 className="text-base font-semibold">{state.device.name}</h1>
       <span className="font-mono text-xs text-zinc-500">{state.device.serial_port}</span>
@@ -34,6 +39,23 @@ export default function TopBar({
       <span className="text-xs text-zinc-500">
         {state.layout.name} / {state.layout.keys.length} keys / {state.keymap.layers.length} layers
       </span>
+      <nav className="order-last flex w-full min-w-0 flex-wrap gap-1" aria-label="機能タブ">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => onTab(t.id)}
+            aria-current={tab === t.id ? "page" : undefined}
+            className={
+              "rounded px-3 py-1 text-xs font-medium " +
+              (tab === t.id
+                ? "bg-sky-600 text-white"
+                : "border border-zinc-700 text-zinc-300 hover:bg-zinc-800")
+            }
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
       <div className="ml-auto flex items-center gap-2">
         <button
           onClick={onToggleLog}

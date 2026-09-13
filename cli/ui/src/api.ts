@@ -1,4 +1,4 @@
-import type { Binding, OpResult, State } from "./types";
+import type { Binding, Features, MacroStep, OpResult, State } from "./types";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -42,3 +42,60 @@ export const resetDevice = () => call<{ ok: boolean }>("POST", "/api/reset", {})
 
 export const backupLog = (limit = 50) =>
   call<{ entries: Record<string, unknown>[] }>("GET", `/api/backup-log?limit=${limit}`);
+
+// ---- feature panels -------------------------------------------------------
+
+export const getFeatures = () => call<Features>("GET", "/api/features");
+
+/** Parse the macro DSL server-side. Pure: touches no device. */
+export const macroParse = (dsl: string, allow_unbalanced = false) =>
+  call<{ ok: boolean; steps?: MacroStep[]; error?: string }>("POST", "/api/macro/parse", {
+    dsl,
+    allow_unbalanced,
+  });
+
+export const macroSet = (slot: number, steps: MacroStep[]) =>
+  call<OpResult & { warning?: string | null }>("POST", "/api/macro", { slot, steps });
+
+export const holdtapSet = (slot: number, field: string, value: number | string) =>
+  call<OpResult>("POST", "/api/holdtap", { slot, field, value });
+
+export const holdtapReset = (slot: number) => call<OpResult>("POST", "/api/holdtap/reset", { slot });
+
+export const condlayerSet = (index: number, if_layers: number[], then_layer: number) =>
+  call<OpResult>("POST", "/api/condlayer", { index, if_layers, then_layer });
+
+export const condlayerReset = (index: number) =>
+  call<OpResult>("POST", "/api/condlayer/reset", { index });
+
+export interface ComboSetBody {
+  index: number;
+  field: "binding" | "timeout-ms" | "require-prior-idle-ms" | "layers" | "slow-release";
+  value?: number | boolean | number[];
+  binding?: { behavior_id: number; param1: number; param2: number };
+}
+
+export const comboSet = (body: ComboSetBody) => call<OpResult>("POST", "/api/combo", body);
+
+export const comboReset = (index: number) => call<OpResult>("POST", "/api/combo/reset", { index });
+
+export interface EncoderSetBody {
+  sensor: number;
+  layer: number;
+  direction: "cw" | "ccw";
+  behavior_id: number;
+  param1: number;
+  param2: number;
+  tap_ms: number;
+}
+
+export const encoderSet = (body: EncoderSetBody) => call<OpResult>("POST", "/api/encoder", body);
+
+export const encoderReset = (sensor: number, layer: number) =>
+  call<OpResult>("POST", "/api/encoder/reset", { sensor, layer });
+
+export const trackballSet = (id: number, field: string, value: number | boolean | string) =>
+  call<OpResult>("POST", "/api/trackball", { id, field, value });
+
+export const trackballReset = (id: number) =>
+  call<OpResult>("POST", "/api/trackball/reset", { id });
