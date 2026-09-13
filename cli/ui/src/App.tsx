@@ -3,6 +3,7 @@ import { getFeatures, getState, layerOp, resetDevice, snapshot } from "./api";
 import { activeCombos } from "./board";
 import { decorFor } from "./decor";
 import ChangeLog from "./components/ChangeLog";
+import ComboList from "./components/ComboList";
 import ConfirmDialog from "./components/ConfirmDialog";
 import Inspector from "./components/Inspector";
 import Keyboard from "./components/Keyboard";
@@ -160,31 +161,47 @@ export default function App() {
 
         {tab === "keymap" ? (
           <div className="grid min-h-0 grid-cols-[auto_1fr]">
-            <LayerChips
-              layers={state.keymap.layers}
-              current={layer.index}
-              onSelect={setLayerIdx}
-              availableLayers={state.keymap.available_layers}
-              maxNameLength={state.keymap.max_layer_name_length}
-              disabled={!!locked || busy}
-              collapsed={selection !== null}
-              removed={removed}
-              showCombos={showCombos}
-              onToggleCombos={setShowCombos}
-              onRename={(id, name) =>
-                void run(() => layerOp("rename", { layer_id: id, name }), "名前を変更しました")
-              }
-              onMove={(start, dest) =>
-                void run(() => layerOp("move", { start, dest }), "並び替えました")
-              }
-              onAdd={() => void run(() => layerOp("add", {}), "レイヤーを追加しました")}
-              onRemove={(index) =>
-                void run(() => layerOp("remove", { index }), "レイヤーを削除しました")
-              }
-              onRestore={(id, at) =>
-                void run(() => layerOp("restore", { layer_id: id, at_index: at }), "復元しました")
-              }
-            />
+            {/* The layer card and the combo list share one column; both give
+                the width back to the board while the inspector is open. */}
+            <div className="flex min-h-0 flex-col">
+              <LayerChips
+                layers={state.keymap.layers}
+                current={layer.index}
+                onSelect={setLayerIdx}
+                availableLayers={state.keymap.available_layers}
+                maxNameLength={state.keymap.max_layer_name_length}
+                disabled={!!locked || busy}
+                collapsed={selection !== null}
+                removed={removed}
+                showCombos={showCombos}
+                onToggleCombos={setShowCombos}
+                onRename={(id, name) =>
+                  void run(() => layerOp("rename", { layer_id: id, name }), "名前を変更しました")
+                }
+                onMove={(start, dest) =>
+                  void run(() => layerOp("move", { start, dest }), "並び替えました")
+                }
+                onAdd={() => void run(() => layerOp("add", {}), "レイヤーを追加しました")}
+                onRemove={(index) =>
+                  void run(() => layerOp("remove", { index }), "レイヤーを削除しました")
+                }
+                onRestore={(id, at) =>
+                  void run(() => layerOp("restore", { layer_id: id, at_index: at }), "復元しました")
+                }
+              />
+              {selection === null && (
+                <ComboList
+                  combos={features?.combos ?? null}
+                  layers={state.keymap.layers}
+                  base={state.keymap.layers[0]}
+                  currentLayer={layer.index}
+                  selected={null /* the card hides while the inspector is open */}
+                  hover={hoverCombo}
+                  onHover={setHoverCombo}
+                  onSelect={setSelection}
+                />
+              )}
+            </div>
             <div className="relative min-h-0">
               <Keyboard
                 layout={state.layout}

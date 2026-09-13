@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { comboReset, comboSet, type ComboSetBody } from "../api";
+import { comboKeysText } from "../board";
 import { COMBO_HELP } from "../help";
 import { Btn, LabelText, NumberField } from "../panels/ui";
 import { pretty } from "../prettyKeycode";
@@ -58,15 +59,7 @@ export default function ComboInspector({
   if (!entry || !draft) return <p className="text-xs text-zinc-500">コンボ {index} がありません。</p>;
 
   const seed = draftOf(entry);
-  const base = state.keymap.layers[0];
-  /** `S+A`: what the combo's keys do on the DEFAULT layer. */
-  const keysText = entry.key_positions
-    .map((p) => {
-      const l = base?.bindings[p]?.label;
-      if (!l) return "?";
-      return "text" in l ? pretty(l.text) : pretty(l.tap);
-    })
-    .join("+");
+  const keysText = comboKeysText(entry, state.keymap.layers[0]);
 
   const edit = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
 

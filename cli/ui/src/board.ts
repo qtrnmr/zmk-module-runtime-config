@@ -1,6 +1,6 @@
 import type { KeyBox } from "./geometry";
 import { pretty } from "./prettyKeycode";
-import type { ComboEntry, Encoder, EncoderLayer, HoldtapSlot, Label } from "./types";
+import type { ComboEntry, Encoder, EncoderLayer, HoldtapSlot, Label, Layer } from "./types";
 
 /** One-line text for a label, for pills and knob captions. */
 export function labelText(label: Label | undefined, fallback = "—"): string {
@@ -32,6 +32,18 @@ export function comboPath(entry: ComboEntry, boxes: KeyBox[]) {
     points.reduce((s, [, y]) => s + y, 0) / n,
   ];
   return { points, centroid };
+}
+
+/** `S+A`: what a combo's keys do on the base layer, for the pill's caption and
+ *  for the combo list beside the board. */
+export function comboKeysText(entry: ComboEntry, base: Layer | undefined): string {
+  return entry.key_positions
+    .map((pos) => {
+      const l = base?.bindings[pos]?.label;
+      if (!l) return "?";
+      return "text" in l ? pretty(l.text) : pretty(l.tap);
+    })
+    .join("+");
 }
 
 /** Combos that fire on `layerIndex`: no layer filter, or the filter names it. */
