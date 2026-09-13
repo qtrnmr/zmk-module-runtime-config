@@ -31,10 +31,12 @@ def _int(body: dict, key: str) -> int:
     return v
 
 
-def _str(body: dict, key: str) -> str:
-    v = body.get(key)
-    if not isinstance(v, str) or not v:
-        raise HttpError(400, f"'{key}' must be a non-empty string")
+def _layer_name(body: dict) -> str:
+    """A layer name may legitimately be empty: that is the device default when the
+    devicetree sets no `display-name`, so clearing a name must stay possible."""
+    v = body.get("name")
+    if not isinstance(v, str):
+        raise HttpError(400, "'name' must be a string")
     return v
 
 
@@ -87,7 +89,7 @@ def _layer_op(op: str, fn):
     return route
 
 
-api_layer_rename = _layer_op("rename", lambda k, b: k.rename(_int(b, "layer_id"), _str(b, "name")))
+api_layer_rename = _layer_op("rename", lambda k, b: k.rename(_int(b, "layer_id"), _layer_name(b)))
 api_layer_add = _layer_op("add", lambda k, b: k.add())
 api_layer_remove = _layer_op("remove", lambda k, b: k.remove(_int(b, "index")))
 api_layer_move = _layer_op("move", lambda k, b: k.move(_int(b, "start"), _int(b, "dest")))

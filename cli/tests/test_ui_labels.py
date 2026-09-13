@@ -36,6 +36,16 @@ def test_momentary_layer_uses_layer_name_or_fallback():
     assert L.label_for(b(9), beh("Momentary Layer", LAYER), LAYERS, REV) == {"text": "L9", "behavior": "Momentary Layer"}
 
 
+def test_empty_layer_name_falls_back_to_index():
+    """roBa has no `display-name` on its layer nodes, so the device reports "" for
+    every layer; an empty name must render as L<n>, not as an empty label."""
+    unnamed = {i: "" for i in range(12)}
+    assert L.label_for(b(8), beh("Momentary Layer", LAYER), unnamed, REV) == \
+        {"text": "L8", "behavior": "Momentary Layer"}
+    assert L.label_for(b(7, 0x70004), beh("Layer-Tap", LAYER, HID), unnamed, REV) == \
+        {"hold": "L7", "tap": "A", "behavior": "Layer-Tap"}
+
+
 def test_mod_tap_and_layer_tap_are_hold_tap():
     assert L.label_for(b(0x700E0, 0x70004), beh("Mod-Tap", HID, HID), LAYERS, REV) == \
         {"hold": "LCTRL", "tap": "A", "behavior": "Mod-Tap"}

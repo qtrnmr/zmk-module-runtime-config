@@ -142,6 +142,15 @@ def test_layer_routes(srv):
     assert ("rename", 0, "BASE") in sess.k.calls and sess.k.calls.count(("save",)) == 4  # add failed -> no save
 
 
+def test_rename_accepts_empty_name_and_rejects_non_string(srv):
+    """Devices without `display-name` report "" for every layer, so clearing a
+    name back to "" must be possible; a non-string is still a 400."""
+    sess, port = srv
+    assert _req(port, "POST", "/api/layer/rename", {"layer_id": 7, "name": ""})[1]["ok"] is True
+    assert ("rename", 7, "") in sess.k.calls
+    assert _req(port, "POST", "/api/layer/rename", {"layer_id": 7, "name": 5})[0] == 400
+
+
 def test_snapshot_reset_and_backup_log(srv, tmp_path):
     sess, port = srv
     st, body = _req(port, "POST", "/api/snapshot", {})

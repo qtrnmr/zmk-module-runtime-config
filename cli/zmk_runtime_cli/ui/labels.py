@@ -46,7 +46,9 @@ def param_text(descs: list[dict], value: int, layers_by_index: dict[int, str],
     if kind == "hid_usage":
         return keycode_text(value, rev)
     if kind == "layer_id":
-        return layers_by_index.get(value, f"L{value}")
+        # real devices report an empty Layer.name unless the devicetree sets
+        # `display-name`, so treat "" the same as "missing" and fall back to L<n>
+        return layers_by_index.get(value) or f"L{value}"
     return str(value)
 
 
