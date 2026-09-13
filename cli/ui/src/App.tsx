@@ -7,6 +7,9 @@ import KeyEditor from "./components/KeyEditor";
 import LayerSidebar, { type RemovedLayer } from "./components/LayerSidebar";
 import Toast from "./components/Toast";
 import TopBar from "./components/TopBar";
+import CondlayerPanel from "./panels/CondlayerPanel";
+import HoldtapPanel from "./panels/HoldtapPanel";
+import MacroPanel from "./panels/MacroPanel";
 import type { Features, Layer, State, Tab } from "./types";
 
 export default function App() {
@@ -209,10 +212,19 @@ function FeaturePanel({
   ...rest
 }: { tab: Tab; features: Features | null } & Omit<PanelProps, "features">) {
   if (!features) return <div className="p-8 text-zinc-400">機能を読み込み中…</div>;
-  return (
-    <div className="min-h-0 overflow-y-auto p-4 text-sm text-zinc-400">
-      {tab} パネルは準備中です。
-      <span className="sr-only">{String(rest.disabled)}</span>
-    </div>
-  );
+  const props: PanelProps = { features, ...rest };
+  switch (tab) {
+    case "macro":
+      return <MacroPanel {...props} />;
+    case "holdtap":
+      return <HoldtapPanel {...props} />;
+    case "condlayer":
+      return <CondlayerPanel {...props} />;
+    default:
+      return (
+        <div className="min-h-0 overflow-y-auto p-4 text-sm text-zinc-400">
+          {tab} パネルは準備中です。
+        </div>
+      );
+  }
 }

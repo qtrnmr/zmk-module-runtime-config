@@ -1,5 +1,23 @@
+import { MOD_ORDER, splitMods } from "./params";
 import { pretty } from "./prettyKeycode";
 import type { MacroStep } from "./types";
+
+/** value -> canonical name, shortest name wins — the same rule the server's
+ *  reverse_keycodes() uses, so a locally named step reads like a device one. */
+export function reverseKeycodes(keycodes: Record<string, number>): Map<number, string> {
+  const rev = new Map<number, string>();
+  for (const name of Object.keys(keycodes).sort((a, b) => a.length - b.length || a.localeCompare(b)))
+    if (!rev.has(keycodes[name])) rev.set(keycodes[name], name);
+  return rev;
+}
+
+/** Canonical name for a keycode, mods wrapped outermost-first: `LC(LS(Z))`.
+ *  Used for steps the device has not labelled yet (DSL import, new rows). */
+export function keycodeName(rev: Map<number, string>, value: number): string {
+  const { base, mods } = splitMods(value);
+  const text = rev.get(base) ?? `0x${base.toString(16).toUpperCase()}`;
+  return MOD_ORDER.filter((m) => mods.includes(m)).reduceRight((t, m) => `${m}(${t})`, text);
+}
 
 const ARROW = ["", "↓", "↑"] as const;
 

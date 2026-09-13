@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { stepPreview } from "./macroFormat";
+import { keycodeName, reverseKeycodes, stepPreview } from "./macroFormat";
+import { MOD_BITS } from "./params";
 import type { MacroStep } from "./types";
 
 const step = (o: Partial<MacroStep>): MacroStep => ({
@@ -39,5 +40,21 @@ describe("stepPreview", () => {
   it("prettifies the canonical name and falls back to the raw keycode", () => {
     expect(stepPreview([step({ label: "SPC" })])).toBe("␣");
     expect(stepPreview([step({ keycode: 458756 })])).toBe("458756");
+  });
+});
+
+describe("keycodeName", () => {
+  const rev = reverseKeycodes({ A: 0x070004, LETTER_A: 0x070004, TAB: 0x07002b });
+
+  it("picks the shortest alias, like the server does", () => {
+    expect(keycodeName(rev, 0x070004)).toBe("A");
+  });
+
+  it("wraps modifiers outermost-first", () => {
+    expect(keycodeName(rev, 0x070004 | MOD_BITS.LC | MOD_BITS.LS)).toBe("LC(LS(A))");
+  });
+
+  it("falls back to hex for an unknown usage", () => {
+    expect(keycodeName(rev, 0x070099)).toBe("0x70099");
   });
 });
