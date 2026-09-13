@@ -22,6 +22,10 @@ import TrackballDecor from "./TrackballDecor";
 import { useTooltip } from "./Tooltip";
 
 const PAD = 14;
+/** Gap between a cap and its 1u cell, in px: keys on a 100-unit pitch get a
+ *  ~10% gutter (real caps are ~18mm on a 19mm pitch) and the fanned thumb
+ *  keys stop touching each other. */
+const G = 3;
 /** Behaviors whose name adds nothing over the label itself. */
 const PLAIN = new Set(["Key Press", "Transparent", "None"]);
 
@@ -50,12 +54,22 @@ function tag(behavior: string): string {
   return behavior.length <= 6 ? behavior : behavior.slice(0, 5) + "…";
 }
 
+/** Font size that keeps a label inside a ~54px cap: 16px up to 4 chars,
+ *  then smaller for names like SETTING / FUNCTION. */
+function fit(text: string): string {
+  if (text.length <= 4) return "text-[16px]";
+  if (text.length <= 6) return "text-[13px]";
+  if (text.length <= 8) return "text-[11px]";
+  return "text-[9px]";
+}
+
 function KeyLabel({ label, dim }: { label: Label; dim?: boolean }) {
   const cls = dim ? "fill-zinc-500" : "fill-zinc-100";
   if ("text" in label) {
+    const t = pretty(label.text);
     return (
-      <text textAnchor="middle" dominantBaseline="central" className={`${cls} text-[16px]`}>
-        {pretty(label.text)}
+      <text textAnchor="middle" dominantBaseline="central" className={`${cls} ${fit(t)}`}>
+        {t}
       </text>
     );
   }
@@ -69,7 +83,12 @@ function KeyLabel({ label, dim }: { label: Label; dim?: boolean }) {
       >
         {pretty(label.hold)}
       </text>
-      <text textAnchor="middle" dominantBaseline="central" y={6} className={`${cls} text-[16px]`}>
+      <text
+        textAnchor="middle"
+        dominantBaseline="central"
+        y={6}
+        className={`${cls} ${fit(pretty(label.tap))}`}
+      >
         {pretty(label.tap)}
       </text>
     </>
@@ -265,11 +284,11 @@ export default function Keyboard({
               className="group cursor-pointer"
             >
               <rect
-                x={b.x}
-                y={b.y}
-                width={b.w}
-                height={b.h}
-                rx={8}
+                x={b.x + G}
+                y={b.y + G}
+                width={b.w - 2 * G}
+                height={b.h - 2 * G}
+                rx={7}
                 filter="url(#capShadow)"
                 className={
                   (isLit
@@ -284,9 +303,9 @@ export default function Keyboard({
               />
               {/* 1px inner top highlight, so the cap reads as a physical key */}
               <rect
-                x={b.x + 3}
-                y={b.y + 2}
-                width={b.w - 6}
+                x={b.x + G + 3}
+                y={b.y + G + 2}
+                width={b.w - 2 * G - 6}
                 height={2}
                 rx={1}
                 className="fill-zinc-700/70"
@@ -295,14 +314,14 @@ export default function Keyboard({
                 {ghost ? <KeyLabel label={ghost} dim /> : <KeyLabel label={label} />}
               </g>
               {transparent && (
-                <text x={b.x + 5} y={b.y + 13} className="fill-zinc-600 text-[9px]">
+                <text x={b.x + G + 5} y={b.y + G + 13} className="fill-zinc-600 text-[9px]">
                   {"▽"}
                 </text>
               )}
               {tag(label.behavior) && (
                 <text
-                  x={b.x + b.w - 4}
-                  y={b.y + b.h - 4}
+                  x={b.x + b.w - G - 4}
+                  y={b.y + b.h - G - 4}
                   textAnchor="end"
                   className="fill-sky-500/70 text-[8px]"
                 >

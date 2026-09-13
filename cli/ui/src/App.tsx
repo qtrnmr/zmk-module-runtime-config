@@ -173,8 +173,6 @@ export default function App() {
                 disabled={!!locked || busy}
                 collapsed={selection !== null}
                 removed={removed}
-                showCombos={showCombos}
-                onToggleCombos={setShowCombos}
                 onRename={(id, name) =>
                   void run(() => layerOp("rename", { layer_id: id, name }), "名前を変更しました")
                 }
@@ -199,6 +197,8 @@ export default function App() {
                   hover={hoverCombo}
                   onHover={setHoverCombo}
                   onSelect={setSelection}
+                  showCombos={showCombos}
+                  onToggleCombos={setShowCombos}
                 />
               )}
             </div>

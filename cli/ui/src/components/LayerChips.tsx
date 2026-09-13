@@ -29,8 +29,6 @@ export default function LayerChips({
   onRemove,
   removed,
   onRestore,
-  showCombos,
-  onToggleCombos,
   collapsed = false,
 }: {
   layers: Layer[];
@@ -45,8 +43,6 @@ export default function LayerChips({
   onRemove(index: number): void;
   removed: RemovedLayer[];
   onRestore(layerId: number, atIndex: number): void;
-  showCombos: boolean;
-  onToggleCombos(v: boolean): void;
   /** Narrow, index-only mode: on while the right-hand inspector is open. */
   collapsed?: boolean;
 }) {
@@ -195,21 +191,6 @@ export default function LayerChips({
           ))}
       </ul>
 
-      <label
-        title={collapsed ? "コンボ表示" : undefined}
-        className={
-          "flex items-center border-t border-zinc-800 text-sm text-zinc-300 " +
-          (collapsed ? "justify-center px-1 py-2" : "gap-2 px-3 py-2")
-        }
-      >
-        <input
-          type="checkbox"
-          checked={showCombos}
-          onChange={(e) => onToggleCombos(e.target.checked)}
-          className="accent-amber-500"
-        />
-        {!collapsed && "コンボ表示"}
-      </label>
 
       <ConfirmDialog
         open={confirmIdx !== null}

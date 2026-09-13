@@ -16,6 +16,8 @@ export default function ComboList({
   hover,
   onHover,
   onSelect,
+  showCombos,
+  onToggleCombos,
 }: {
   /** null while /api/features is still in flight. */
   combos: Combos | null;
@@ -26,6 +28,10 @@ export default function ComboList({
   hover: number | null;
   onHover(index: number | null): void;
   onSelect(sel: Selection): void;
+  /** Whether the board draws combo links; the switch lives here so the toggle
+   *  sits next to the list it controls. */
+  showCombos: boolean;
+  onToggleCombos(v: boolean): void;
 }) {
   // A keyboard without the combos RPC gets no card at all, rather than an
   // empty one that suggests it simply has no combos.
@@ -38,8 +44,33 @@ export default function ComboList({
       <header className="flex items-center gap-2 border-b border-zinc-800 px-3 py-2">
         <h2 className="text-xs font-semibold tracking-wide text-zinc-400">コンボ</h2>
         {!!entries.length && (
-          <span className="ml-auto font-mono text-[11px] text-zinc-600">{entries.length}</span>
+          <span className="font-mono text-[11px] text-zinc-600">{entries.length}</span>
         )}
+        <label
+          title="盤面にコンボの線とピルを描く"
+          className="ml-auto flex cursor-pointer items-center gap-1.5 text-[11px] text-zinc-400"
+        >
+          盤面に表示
+          <span
+            className={
+              "relative inline-block h-4 w-7 rounded-full transition-colors " +
+              (showCombos ? "bg-amber-500" : "bg-zinc-700")
+            }
+          >
+            <input
+              type="checkbox"
+              checked={showCombos}
+              onChange={(e) => onToggleCombos(e.target.checked)}
+              className="peer absolute inset-0 cursor-pointer opacity-0"
+            />
+            <span
+              className={
+                "absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-all " +
+                (showCombos ? "left-3.5" : "left-0.5")
+              }
+            />
+          </span>
+        </label>
       </header>
 
       {!combos ? (
