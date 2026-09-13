@@ -11,7 +11,11 @@ export interface RemovedLayer {
 
 /** The layer switcher: a small floating card beside the keyboard with one row
  *  per layer. Click selects, double-click renames inline, drag reorders, `×`
- *  removes (with confirm); removed layers get a dashed "復元" row. */
+ *  removes (with confirm); removed layers get a dashed "復元" row.
+ *
+ *  While the inspector is open the card collapses to a 44px strip of index
+ *  badges, so the board keeps its width; renaming, reordering and removing are
+ *  only offered in the expanded card. */
 export default function LayerChips({
   layers,
   current,
@@ -27,6 +31,7 @@ export default function LayerChips({
   onRestore,
   showCombos,
   onToggleCombos,
+  collapsed = false,
 }: {
   layers: Layer[];
   current: number;
@@ -42,6 +47,8 @@ export default function LayerChips({
   onRestore(layerId: number, atIndex: number): void;
   showCombos: boolean;
   onToggleCombos(v: boolean): void;
+  /** Narrow, index-only mode: on while the right-hand inspector is open. */
+  collapsed?: boolean;
 }) {
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
@@ -61,24 +68,44 @@ export default function LayerChips({
   const canAdd = availableLayers > 0 && !disabled;
 
   return (
-    <aside className="m-3 flex min-h-0 w-56 flex-col self-start rounded-xl border border-zinc-700/80 bg-zinc-900/80 shadow-xl shadow-black/40 backdrop-blur">
-      <header className="flex items-center gap-2 border-b border-zinc-800 px-3 py-2">
-        <h2 className="text-xs font-semibold tracking-wide text-zinc-400">レイヤー</h2>
+    <aside
+      className={
+        "m-3 flex min-h-0 flex-col self-start overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-900/80 shadow-xl shadow-black/40 backdrop-blur transition-[width] duration-150 " +
+        (collapsed ? "w-11" : "w-56")
+      }
+    >
+      <header
+        className={
+          "flex items-center border-b border-zinc-800 " +
+          (collapsed ? "gap-0.5 px-1 py-1.5" : "gap-2 px-3 py-2")
+        }
+      >
+        <h2
+          title={collapsed ? "レイヤー" : undefined}
+          className={
+            "font-semibold tracking-wide text-zinc-400 " + (collapsed ? "text-[10px]" : "text-xs")
+          }
+        >
+          {collapsed ? "L" : "レイヤー"}
+        </h2>
         <button
           onClick={onAdd}
           disabled={!canAdd}
           title={availableLayers === 0 ? "available_layers = 0 (再フラッシュが必要)" : "レイヤーを追加"}
-          className="ml-auto h-6 w-6 rounded-md border border-dashed border-zinc-600 text-sm leading-none text-zinc-400 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+          className={
+            "ml-auto shrink-0 rounded-md border border-dashed border-zinc-600 leading-none text-zinc-400 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 " +
+            (collapsed ? "h-5 w-5 text-xs" : "h-6 w-6 text-sm")
+          }
         >
           +
         </button>
       </header>
 
-      <ul className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-1.5">
+      <ul className={"min-h-0 flex-1 space-y-0.5 overflow-y-auto " + (collapsed ? "p-1" : "p-1.5")}>
         {layers.map((l) => (
           <li
             key={l.id}
-            draggable={!disabled && editing !== l.id}
+            draggable={!collapsed && !disabled && editing !== l.id}
             onDragStart={(e) => {
               setDragFrom(l.index);
               e.dataTransfer.setData("text/plain", String(l.index));
@@ -101,7 +128,7 @@ export default function LayerChips({
               (dragFrom !== null && dragFrom !== l.index ? " outline outline-1 outline-dashed outline-zinc-600" : "")
             }
           >
-            {editing === l.id ? (
+            {editing === l.id && !collapsed ? (
               <input
                 autoFocus
                 value={draft}
@@ -117,9 +144,16 @@ export default function LayerChips({
             ) : (
               <button
                 onClick={() => onSelect(l.index)}
-                onDoubleClick={() => startEdit(l)}
-                title="ダブルクリックで名前を編集"
-                className="flex min-w-0 flex-1 items-center gap-2 py-1.5 pl-1.5 pr-2 text-left"
+                onDoubleClick={() => !collapsed && startEdit(l)}
+                title={
+                  collapsed
+                    ? `${l.index} · ${layerLabel(l)}`
+                    : "ダブルクリックで名前を編集"
+                }
+                className={
+                  "flex min-w-0 flex-1 items-center text-left " +
+                  (collapsed ? "justify-center py-1" : "gap-2 py-1.5 pl-1.5 pr-2")
+                }
               >
                 <span
                   className={
@@ -129,12 +163,12 @@ export default function LayerChips({
                 >
                   {l.index}
                 </span>
-                <span className="truncate">{layerLabel(l)}</span>
+                {!collapsed && <span className="truncate">{layerLabel(l)}</span>}
               </button>
             )}
             <button
               onClick={() => setConfirmIdx(l.index)}
-              disabled={disabled}
+              disabled={disabled || collapsed}
               title="削除"
               className={
                 "hidden pr-2 group-hover:block disabled:hidden " +
@@ -146,28 +180,35 @@ export default function LayerChips({
           </li>
         ))}
 
-        {removed.map((r) => (
-          <li key={r.id}>
-            <button
-              onClick={() => onRestore(r.id, layers.length)}
-              disabled={disabled}
-              title="削除したレイヤーを復元"
-              className="w-full rounded-lg border border-dashed border-zinc-600 px-2 py-1.5 text-left text-sm text-zinc-400 hover:text-zinc-200 disabled:opacity-40"
-            >
-              復元: {r.name || `L${r.index}`}
-            </button>
-          </li>
-        ))}
+        {!collapsed &&
+          removed.map((r) => (
+            <li key={r.id}>
+              <button
+                onClick={() => onRestore(r.id, layers.length)}
+                disabled={disabled}
+                title="削除したレイヤーを復元"
+                className="w-full rounded-lg border border-dashed border-zinc-600 px-2 py-1.5 text-left text-sm text-zinc-400 hover:text-zinc-200 disabled:opacity-40"
+              >
+                復元: {r.name || `L${r.index}`}
+              </button>
+            </li>
+          ))}
       </ul>
 
-      <label className="flex items-center gap-2 border-t border-zinc-800 px-3 py-2 text-sm text-zinc-300">
+      <label
+        title={collapsed ? "コンボ表示" : undefined}
+        className={
+          "flex items-center border-t border-zinc-800 text-sm text-zinc-300 " +
+          (collapsed ? "justify-center px-1 py-2" : "gap-2 px-3 py-2")
+        }
+      >
         <input
           type="checkbox"
           checked={showCombos}
           onChange={(e) => onToggleCombos(e.target.checked)}
           className="accent-amber-500"
         />
-        コンボ表示
+        {!collapsed && "コンボ表示"}
       </label>
 
       <ConfirmDialog

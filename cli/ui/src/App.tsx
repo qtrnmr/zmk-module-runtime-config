@@ -167,6 +167,7 @@ export default function App() {
               availableLayers={state.keymap.available_layers}
               maxNameLength={state.keymap.max_layer_name_length}
               disabled={!!locked || busy}
+              collapsed={selection !== null}
               removed={removed}
               showCombos={showCombos}
               onToggleCombos={setShowCombos}
