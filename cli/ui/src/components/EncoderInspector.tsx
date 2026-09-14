@@ -24,6 +24,7 @@ const DIR_LABEL: Record<Direction, string> = { cw: "↻ 時計回り (cw)", ccw:
 
 function DirectionCard({
   state,
+  groups,
   sensor,
   layerIndex,
   direction,
@@ -32,6 +33,7 @@ function DirectionCard({
   run,
 }: {
   state: InspectorProps["state"];
+  groups: InspectorProps["groups"];
   sensor: number;
   layerIndex: number;
   direction: Direction;
@@ -55,6 +57,7 @@ function DirectionCard({
       <h3 className="text-xs font-medium text-zinc-400">{DIR_LABEL[direction]}</h3>
       <BindingForm
         state={state}
+        groups={groups}
         value={draft}
         disabled={disabled}
         onChange={(v) => setDraft({ ...draft, ...v })}
@@ -99,10 +102,13 @@ export function EncoderSection({
   state,
   features,
   layer,
+  groups,
   sensor,
   disabled,
   run,
-}: Pick<InspectorProps, "state" | "features" | "layer" | "disabled" | "run"> & { sensor: number }) {
+}: Pick<InspectorProps, "state" | "features" | "layer" | "groups" | "disabled" | "run"> & {
+  sensor: number;
+}) {
   const enc = features?.encoder;
   if (!enc) return <p className="text-xs text-zinc-500">機能を読み込み中…</p>;
   if (!enc.available)
@@ -116,6 +122,7 @@ export function EncoderSection({
         <>
           <DirectionCard
             state={state}
+            groups={groups}
             sensor={sensor}
             layerIndex={layer.index}
             direction="cw"
@@ -125,6 +132,7 @@ export function EncoderSection({
           />
           <DirectionCard
             state={state}
+            groups={groups}
             sensor={sensor}
             layerIndex={layer.index}
             direction="ccw"
@@ -156,6 +164,7 @@ export default function EncoderInspector({
   state,
   features,
   layer,
+  groups,
   sensor,
   disabled,
   run,
@@ -185,6 +194,7 @@ export default function EncoderInspector({
         state={state}
         features={features}
         layer={layer}
+        groups={groups}
         sensor={sensor}
         disabled={disabled}
         run={run}

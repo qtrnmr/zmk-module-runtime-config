@@ -268,6 +268,7 @@ export default function App() {
             tab={tab}
             state={state}
             features={features}
+            groups={meta?.groups ?? []}
             disabled={!!locked || busy}
             run={run}
           />
@@ -280,6 +281,7 @@ export default function App() {
           state={state}
           features={features}
           layer={layer}
+          groups={meta?.groups ?? []}
           disabled={!!locked || busy}
           run={run}
           onClose={() => setSelection(null)}
@@ -316,6 +318,7 @@ export default function App() {
 export interface PanelProps {
   state: State;
   features: Features;
+  groups: LayerGroup[];
   disabled: boolean;
   run(
     fn: () => Promise<{ ok: boolean; error?: string }>,

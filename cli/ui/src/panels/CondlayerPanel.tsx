@@ -3,6 +3,7 @@ import type { PanelProps } from "../App";
 import { condlayerReset, condlayerSet } from "../api";
 import type { CondlayerEntry } from "../types";
 import { layerLabel } from "../types";
+import { LayerCheckboxes, LayerOptions } from "../components/LayerChoice";
 import { Btn, Card, INPUT, NotAvailable, Panel } from "./ui";
 
 interface Draft {
@@ -18,7 +19,13 @@ const draftOf = (e: CondlayerEntry): Draft => ({
 const same = (a: number[], b: number[]) =>
   a.length === b.length && a.every((v, i) => v === b[i]);
 
-export default function CondlayerPanel({ state, features, disabled, run }: PanelProps) {
+export default function CondlayerPanel({
+  state,
+  features,
+  groups,
+  disabled,
+  run,
+}: PanelProps) {
   const cl = features.condlayers;
   const entries = cl.available ? cl.entries : [];
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
@@ -103,20 +110,13 @@ export default function CondlayerPanel({ state, features, disabled, run }: Panel
                 <div className="space-y-3 border-t border-zinc-800 pt-3">
                   <div className="space-y-1">
                     <span className="text-xs font-medium text-zinc-400">if-layers</span>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1">
-                      {state.keymap.layers.map((l) => (
-                        <label key={l.id} className="flex items-center gap-1 text-xs">
-                          <input
-                            type="checkbox"
-                            disabled={disabled}
-                            checked={d.if_layers.includes(l.index)}
-                            onChange={() => toggle(e.index, l.index)}
-                            className="accent-sky-500"
-                          />
-                          <span className="text-zinc-300">{layerLabel(l)}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <LayerCheckboxes
+                      layers={state.keymap.layers}
+                      groups={groups}
+                      checked={d.if_layers}
+                      disabled={disabled}
+                      onToggle={(i) => toggle(e.index, i)}
+                    />
                   </div>
                   <label className="flex items-center gap-2 text-xs font-medium text-zinc-400">
                     then-layer
@@ -131,11 +131,7 @@ export default function CondlayerPanel({ state, features, disabled, run }: Panel
                       }
                       className={INPUT}
                     >
-                      {state.keymap.layers.map((l) => (
-                        <option key={l.id} value={l.index}>
-                          {l.index} · {layerLabel(l)}
-                        </option>
-                      ))}
+                      <LayerOptions layers={state.keymap.layers} groups={groups} />
                     </select>
                   </label>
                 </div>

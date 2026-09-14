@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { BEHAVIOR_HELP, PARAM_HELP } from "../help";
 import { curatedOrder, defaultParam, paramKind } from "../params";
-import type { Behavior, ParamDesc, State } from "../types";
-import { DT_DEFAULT_ID, layerLabel } from "../types";
+import type { Behavior, LayerGroup, ParamDesc, State } from "../types";
+import { DT_DEFAULT_ID } from "../types";
+import { LayerOptions } from "./LayerChoice";
 import KeycodePicker from "./KeycodePicker";
 import { Info } from "./Tooltip";
 
@@ -21,11 +22,13 @@ function ParamEditor({
   value,
   onChange,
   state,
+  groups,
 }: {
   descs: ParamDesc[];
   value: number;
   onChange(v: number): void;
   state: State;
+  groups: LayerGroup[];
 }) {
   const kind = paramKind(descs);
   if (kind === "none") return null;
@@ -41,11 +44,7 @@ function ParamEditor({
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm"
       >
-        {state.keymap.layers.map((l) => (
-          <option key={l.id} value={l.index}>
-            {l.index} · {layerLabel(l)}
-          </option>
-        ))}
+        <LayerOptions layers={state.keymap.layers} groups={groups} />
       </select>
     );
   }
@@ -99,11 +98,13 @@ export default function BindingForm({
   value,
   onChange,
   disabled,
+  groups,
 }: {
   state: State;
   value: BindingValue;
   onChange(v: BindingValue): void;
   disabled?: boolean;
+  groups: LayerGroup[];
 }) {
   const byId = useMemo(() => new Map(state.behaviors.map((b) => [b.id, b])), [state.behaviors]);
   const ordered = useMemo(() => curatedOrder(state.behaviors), [state.behaviors]);
@@ -164,6 +165,7 @@ export default function BindingForm({
               value={value.param1}
               onChange={(v) => onChange({ ...value, param1: v })}
               state={state}
+              groups={groups}
             />
           </fieldset>
         </div>
@@ -184,6 +186,7 @@ export default function BindingForm({
               value={value.param2}
               onChange={(v) => onChange({ ...value, param2: v })}
               state={state}
+              groups={groups}
             />
           </fieldset>
         </div>

@@ -6,7 +6,9 @@ import { BEHAVIOR_HELP } from "../help";
 import { Btn } from "../panels/ui";
 import { pretty } from "../prettyKeycode";
 import { layerLabel } from "../types";
+import { groupLayers } from "../groups";
 import BindingForm, { type BindingValue } from "./BindingForm";
+import { GroupHeading } from "./LayerChoice";
 import { EncoderSection } from "./EncoderInspector";
 import HoldtapSection from "./HoldtapSection";
 import type { InspectorProps } from "./Inspector";
@@ -19,6 +21,7 @@ export default function KeyInspector({
   state,
   features,
   layer,
+  groups,
   pos,
   disabled,
   run,
@@ -79,32 +82,50 @@ export default function KeyInspector({
       <section className="space-y-1">
         <h3 className="text-xs font-medium text-zinc-400">他のレイヤーでのこのキー</h3>
         <ul className="divide-y divide-zinc-800/60 rounded border border-zinc-800">
-          {state.keymap.layers
-            .filter((l) => l.index !== layer.index)
-            .map((l) => {
-              const b = l.bindings[pos];
-              const text = !b
-                ? "—"
-                : "text" in b.label
-                  ? pretty(b.label.text)
-                  : `${pretty(b.label.hold)} / ${pretty(b.label.tap)}`;
-              return (
-                <li key={l.id}>
-                  <button
-                    onClick={() => onSelectLayer(l.index)}
-                    className="flex w-full items-center gap-2 px-2 py-1 text-left text-xs leading-4 hover:bg-zinc-800"
-                  >
-                    <span className="w-5 font-mono text-zinc-500">{l.index}</span>
-                    <span className="w-24 truncate text-zinc-400">{layerLabel(l)}</span>
-                    <span className="truncate text-zinc-200">{text}</span>
-                  </button>
-                </li>
-              );
-            })}
+          {groupLayers(state.keymap.layers, groups).flatMap((sec) => {
+            const rows = sec.layers.filter((l) => l.index !== layer.index);
+            if (!rows.length) return [];
+            return [
+              // A one-group keymap needs no dividing line; several do.
+              ...(groups.length
+                ? [
+                    <li key={`h:${sec.group?.id ?? ":none"}`} className="bg-zinc-900/60 px-2 py-0.5">
+                      <GroupHeading group={sec.group} />
+                    </li>,
+                  ]
+                : []),
+              ...rows.map((l) => {
+                const b = l.bindings[pos];
+                const text = !b
+                  ? "—"
+                  : "text" in b.label
+                    ? pretty(b.label.text)
+                    : `${pretty(b.label.hold)} / ${pretty(b.label.tap)}`;
+                return (
+                  <li key={l.id}>
+                    <button
+                      onClick={() => onSelectLayer(l.index)}
+                      className="flex w-full items-center gap-2 px-2 py-1 text-left text-xs leading-4 hover:bg-zinc-800"
+                    >
+                      <span className="w-5 font-mono text-zinc-500">{l.index}</span>
+                      <span className="w-24 truncate text-zinc-400">{layerLabel(l)}</span>
+                      <span className="truncate text-zinc-200">{text}</span>
+                    </button>
+                  </li>
+                );
+              }),
+            ];
+          })}
         </ul>
       </section>
 
-      <BindingForm state={state} value={value} onChange={setValue} disabled={disabled} />
+      <BindingForm
+        state={state}
+        groups={groups}
+        value={value}
+        onChange={setValue}
+        disabled={disabled}
+      />
 
       <div className="flex gap-2">
         <Btn kind="primary" disabled={disabled} onClick={() => apply()}>
@@ -142,6 +163,7 @@ export default function KeyInspector({
             state={state}
             features={features}
             layer={layer}
+            groups={groups}
             sensor={sensor}
             disabled={disabled}
             run={run}

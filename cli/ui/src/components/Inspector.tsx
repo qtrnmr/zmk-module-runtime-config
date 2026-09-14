@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { FeatureKey, Features, Layer, Selection, State } from "../types";
+import type { FeatureKey, Features, Layer, LayerGroup, Selection, State } from "../types";
 import { layerLabel } from "../types";
 import ComboInspector from "./ComboInspector";
 import EncoderInspector from "./EncoderInspector";
@@ -10,6 +10,8 @@ export interface InspectorProps {
   state: State;
   features: Features | null;
   layer: Layer;
+  /** UI-only layer groups: every layer list in here follows their order. */
+  groups: LayerGroup[];
   disabled: boolean;
   run(
     fn: () => Promise<{ ok: boolean; error?: string }>,

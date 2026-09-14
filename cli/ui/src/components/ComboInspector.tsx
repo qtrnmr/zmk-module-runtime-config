@@ -5,9 +5,9 @@ import { COMBO_HELP } from "../help";
 import { Btn, LabelText, NumberField } from "../panels/ui";
 import { pretty } from "../prettyKeycode";
 import type { ComboEntry, FeatureKey, OpResult } from "../types";
-import { layerLabel } from "../types";
 import BindingForm, { type BindingValue } from "./BindingForm";
 import type { InspectorProps } from "./Inspector";
+import { LayerCheckboxes } from "./LayerChoice";
 import { Info } from "./Tooltip";
 
 interface Draft {
@@ -40,6 +40,7 @@ const PARTS: FeatureKey[] = ["combos"];
 export default function ComboInspector({
   state,
   features,
+  groups,
   index,
   disabled,
   run,
@@ -120,6 +121,7 @@ export default function ComboInspector({
 
       <BindingForm
         state={state}
+        groups={groups}
         value={draft.binding}
         disabled={disabled}
         onChange={(v) => edit({ binding: v })}
@@ -161,26 +163,19 @@ export default function ComboInspector({
           有効レイヤー (空 = 全レイヤー)
           <Info text={COMBO_HELP.layers} label="有効レイヤー" />
         </span>
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
-          {state.keymap.layers.map((l) => (
-            <label key={l.id} className="flex items-center gap-1 text-xs">
-              <input
-                type="checkbox"
-                disabled={disabled}
-                checked={draft.layers.includes(l.index)}
-                onChange={() =>
-                  edit({
-                    layers: draft.layers.includes(l.index)
-                      ? draft.layers.filter((x) => x !== l.index)
-                      : [...draft.layers, l.index].sort((a, b) => a - b),
-                  })
-                }
-                className="accent-sky-500"
-              />
-              <span className="text-zinc-300">{layerLabel(l)}</span>
-            </label>
-          ))}
-        </div>
+        <LayerCheckboxes
+          layers={state.keymap.layers}
+          groups={groups}
+          checked={draft.layers}
+          disabled={disabled}
+          onToggle={(i) =>
+            edit({
+              layers: draft.layers.includes(i)
+                ? draft.layers.filter((x) => x !== i)
+                : [...draft.layers, i].sort((a, b) => a - b),
+            })
+          }
+        />
       </div>
 
       <div className="flex gap-2">
