@@ -14,6 +14,15 @@ import {
   groupTrackballFields,
   keycodeHelp,
 } from "./help";
+import {
+  CAT_APP,
+  CAT_INTL,
+  CAT_KEYPAD,
+  CAT_MEDIA,
+  CAT_SYMBOL,
+  catalog,
+} from "./keycodeCatalog";
+import { KEYCODE_VALUES } from "./keycodeValues.fixture";
 import { MOD_ORDER } from "./params";
 import { pretty } from "./prettyKeycode";
 
@@ -131,10 +140,37 @@ describe("groupTrackballFields", () => {
   });
 });
 
+describe("every key the カタログ shelves says what it does", () => {
+  const sections = catalog(KEYCODE_VALUES);
+  const entries = (cat: string) => sections.find((s) => s.category === cat)!.entries;
+
+  // The shelves a person opens because they do NOT recognise the name: a blank
+  // tooltip there is the bug this whole section exists to prevent.
+  it.each([CAT_SYMBOL, CAT_KEYPAD, CAT_MEDIA, CAT_APP, CAT_INTL])("%s", (cat) => {
+    const blank = entries(cat).filter((e) => !keycodeHelp(e.name)).map((e) => e.name);
+    expect(blank).toEqual([]);
+  });
+
+  it("says the same thing about every extended function key", () => {
+    for (let f = 13; f <= 24; f++)
+      expect(keycodeHelp(`F${f}`)).toBe(
+        `F${f} キー (標準キーボードには無い拡張ファンクションキー)。OS やアプリ側でショートカットに割り当てて使う。`,
+      );
+  });
+
+  // Deliberately silent: the cap says it. Listed so "no note" stays a decision
+  // rather than an oversight.
+  it("stays quiet about the keys nobody needs explained", () => {
+    for (const n of ["A", "Z", "NUM_0", "NUM_9", "F1", "F12"])
+      expect(keycodeHelp(n), n).toBeUndefined();
+  });
+});
+
 describe("keycodeHelp", () => {
   it("splits modifier prefixes into a readable chord", () => {
     expect(keycodeHelp("LC(LS(Z))")).toBe("Ctrl+Shift+Z の同時押し。");
-    expect(keycodeHelp("LG(TAB)")).toBe(`Gui+${pretty("TAB")} の同時押し。`);
+    // The base key's own note is appended after the chord when it has one.
+    expect(keycodeHelp("LG(TAB)")).toBe(`Gui+${pretty("TAB")} の同時押し。 TAB: ${KEYCODE_HELP.TAB}`);
     expect(keycodeHelp("RC(RA(RS(RG(A))))")).toBe("Ctrl+Alt+Shift+Gui+A の同時押し。");
   });
 

@@ -72,8 +72,8 @@ describe("describeBinding", () => {
   it("says what a key press sends, and what an obscure keycode means", () => {
     expect(say(1, KEYCODES.A)).toBe("キー入力: A");
     expect(say(1, KEYCODES.K_MUTE)).toBe("キー入力: Mute · ミュート (音を消す / 戻す)。キーボード扱いの Mute で、ほぼ全 OS で効く");
-    // A bare symbol keeps its canonical name beside it.
-    expect(say(1, KEYCODES.SPC)).toBe("キー入力: ␣ (SPC)");
+    // A bare symbol keeps its canonical name beside it, so ␣ is still legible.
+    expect(say(1, KEYCODES.SPC)).toBe("キー入力: ␣ (SPC) · Space。空白を 1 つ入れる");
   });
 
   it("splits a hold-tap into its two halves", () => {
