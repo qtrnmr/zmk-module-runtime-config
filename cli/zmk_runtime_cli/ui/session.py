@@ -13,7 +13,9 @@ from ..encoder_client import EncoderClient
 from ..holdtap_client import HoldtapClient
 from ..keymap_client import KeymapClient
 from ..macro_client import MacroClient
+from ..monitor_client import MonitorClient
 from ..rip_client import RipClient
+from .mux_serial import MuxSerial
 from .native_client import NativeClient
 
 
@@ -30,13 +32,26 @@ class DeviceSession:
         # Probed once per session by features.collect_macros (the macro RPC has
         # no count call, so the slot count costs one round trip per slot).
         self.macro_slot_count: int | None = None
+        # 練習モード. `None` = not probed yet, `False` = this firmware has no
+        # zmk__monitor. Probed once per handle by ensure_monitor_index().
+        self._monitor_index: int | None | bool = None
 
     # -- serial lifecycle -------------------------------------------------
     @property
     def serial(self):
+        """The one handle, wrapped so the monitor stream can be split off it.
+
+        MuxSerial is a pass-through until something subscribes, so every
+        existing client keeps reading exactly what it reads today."""
         if self._ser is None:
             self.port_name = self._port or rpc.find_port()
-            self._ser = serial.Serial(self.port_name, self._baud, timeout=0.1)
+            self._ser = MuxSerial(
+                serial.Serial(self.port_name, self._baud, timeout=0.1),
+                on_error=self.on_serial_error,
+            )
+        elif not isinstance(self._ser, MuxSerial):
+            # An injected handle (tests) is wrapped once, in place.
+            self._ser = MuxSerial(self._ser)
         return self._ser
 
     def on_serial_error(self) -> None:
@@ -47,11 +62,15 @@ class DeviceSession:
             except Exception:  # noqa: BLE001
                 pass
             self._ser = None
+            self._monitor_index = None
 
     def close(self) -> None:
+        if self._ser is not None and isinstance(self._ser, MuxSerial):
+            self._ser.stop()
         if not self._injected and self._ser is not None:
             self._ser.close()
             self._ser = None
+            self._monitor_index = None
 
     def __enter__(self) -> "DeviceSession":
         self.lock.acquire()
@@ -90,6 +109,30 @@ class DeviceSession:
 
     def rip_client(self) -> RipClient:
         return RipClient(_ser=self.serial)
+
+    def monitor_client(self) -> MonitorClient:
+        return MonitorClient(_ser=self.serial)
+
+    # -- 練習モード -------------------------------------------------------
+    def ensure_monitor_index(self) -> bool:
+        """Resolve zmk__monitor once and tell the mux which frames are ours.
+
+        False on firmware built without CONFIG_ZMK_RUNTIME_MONITOR — that is
+        the /api/events `unavailable` path. The caller must hold the lock."""
+        ser = self.serial
+        if self._monitor_index is False:
+            return False
+        if isinstance(self._monitor_index, int):
+            ser.set_monitor_index(self._monitor_index)
+            return True
+        try:
+            index = self.monitor_client().resolve_index()
+        except Exception:  # noqa: BLE001  missing subsystem, or the port died
+            self._monitor_index = False
+            return False
+        self._monitor_index = index
+        ser.set_monitor_index(index)
+        return True
 
     def behaviors(self) -> list[dict]:
         if self._behaviors is None:
