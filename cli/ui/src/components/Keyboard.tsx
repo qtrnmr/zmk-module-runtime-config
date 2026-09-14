@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from "react";
+import { HOW_JA, type Activator, type ActivatorHow, type KeyActivator } from "../activators";
 import { bounds, toBoxes, UNIT } from "../geometry";
 import { encoderLayerBinding, labelText } from "../board";
 import type { Decor } from "../decor";
@@ -48,6 +49,23 @@ export const TAG: Record<string, string> = {
   "Studio Unlock": "UNLK",
   Bootloader: "BOOT",
 };
+
+/** The gestures at one position, each with the layers it works from — the
+ *  same thumb key is usually an activator on DEFAULT, APPLE and ANDROID at
+ *  once, and that reads as one line, not three. */
+function howGroups(acts: KeyActivator[]): [ActivatorHow, number[]][] {
+  const by = new Map<ActivatorHow, number[]>();
+  for (const a of acts) {
+    const on = by.get(a.how);
+    on ? on.push(a.layer) : by.set(a.how, [a.layer]);
+  }
+  return [...by];
+}
+
+function layerName(layers: Layer[], index: number): string {
+  const l = layers.find((x) => x.index === index);
+  return l ? layerLabel(l) : `L${index}`;
+}
 
 function tag(behavior: string): string {
   if (PLAIN.has(behavior)) return "";
@@ -129,6 +147,7 @@ export default function Keyboard({
   hoverCombo,
   onHoverCombo,
   onTrackball,
+  activators,
   behaviors,
   keycodes,
   layers,
@@ -147,6 +166,8 @@ export default function Keyboard({
   hoverCombo: number | null;
   onHoverCombo(index: number | null): void;
   onTrackball(): void;
+  /** Every way into the layer being shown; only the key-shaped ones are drawn. */
+  activators: Activator[];
   /** Only for the hover tooltip: what a behaviour id and its params mean. */
   behaviors: Behavior[];
   keycodes: Record<string, number>;
@@ -230,6 +251,19 @@ export default function Keyboard({
     );
   };
 
+  /** The keys that lead here, by position. A position can be an activator on
+   *  several layers at once (the same thumb key on DEFAULT / APPLE / ANDROID),
+   *  and the mark belongs to the position, not to the layer being shown. */
+  const actByPos = useMemo(() => {
+    const m = new Map<number, KeyActivator[]>();
+    for (const a of activators) {
+      if (a.kind !== "key") continue;
+      const at = m.get(a.pos);
+      at ? at.push(a) : m.set(a.pos, [a]);
+    }
+    return m;
+  }, [activators]);
+
   const selPos = selection?.kind === "key" ? selection.pos : null;
   const selCombo = selection?.kind === "combo" ? selection.index : null;
   const encoderAt = useMemo(
@@ -293,7 +327,8 @@ export default function Keyboard({
             sensor !== undefined && encoder
               ? encoderLayerBinding(encoder, sensor, layer.index)
               : undefined;
-          const content =
+          const acts = actByPos.get(b.pos) ?? [];
+          const main =
             sensor === undefined ? (
               bindingTip(binding, label, head, b.pos)
             ) : (
@@ -313,6 +348,21 @@ export default function Keyboard({
                 </div>
               </>
             );
+          const content = acts.length ? (
+            <>
+              {main}
+              <div className="mt-1 border-t border-zinc-800 pt-1">
+                {howGroups(acts).map(([how, on]) => (
+                  <p key={how} className="text-violet-300">
+                    このレイヤーへ: {on.map((i) => layerName(layers, i)).join(" · ")} の この位置を
+                    {HOW_JA[how]}
+                  </p>
+                ))}
+              </div>
+            </>
+          ) : (
+            main
+          );
           return (
             <g
               key={b.pos}
@@ -377,6 +427,30 @@ export default function Keyboard({
                     className="fill-zinc-400 text-[8px]"
                   >
                     ↺ {labelText(lb?.ccw.label, "—")}
+                  </text>
+                </g>
+              )}
+              {acts.length > 0 && (
+                // Deliberately not the selection's frame: this key is not the
+                // one you are looking at, it is the one you would hold to be
+                // here — so it gets its own colour along the top edge.
+                <g pointerEvents="none">
+                  <rect
+                    x={b.x + G + 4}
+                    y={b.y + G + 1.5}
+                    width={b.w - 2 * G - 8}
+                    height={3}
+                    rx={1.5}
+                    className="fill-violet-400"
+                  />
+                  <text
+                    x={b.x + G + (transparent ? 13 : 4)}
+                    y={b.y + G + 14}
+                    className="fill-violet-300 text-[8px]"
+                  >
+                    {howGroups(acts)
+                      .map(([how]) => HOW_JA[how])
+                      .join("/")}
                   </text>
                 </g>
               )}

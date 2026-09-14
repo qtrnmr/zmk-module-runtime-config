@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { layerActivators, type Activator } from "./activators";
 import { getFeatures, getState, getUiMeta, layerOp, putUiMeta, resetDevice, snapshot } from "./api";
 import { activeCombos } from "./board";
 import { decorFor } from "./decor";
@@ -96,6 +97,19 @@ export default function App() {
       .filter((l) => !live.has(l.id))
       .map((l) => ({ id: l.id, name: l.name, index: l.index }));
   }, [state]);
+
+  /** How each layer is entered, for every layer at once: the board marks the
+   *  current layer's keys, the banner spells them out and the layer card shows
+   *  a one-character summary per row, and all three must agree. */
+  const activators = useMemo(() => {
+    const m = new Map<number, Activator[]>();
+    if (!state) return m;
+    const decor = decorFor(state.layout);
+    for (const l of state.keymap.layers) {
+      m.set(l.index, layerActivators(state, features, decor, l.index));
+    }
+    return m;
+  }, [state, features]);
 
   const locked = state?.device.lock_state === "LOCKED";
 
@@ -258,6 +272,7 @@ export default function App() {
                 macros={features?.macros ?? null}
                 encoder={features?.encoder ?? null}
                 decor={decorFor(state.layout)}
+                activators={activators.get(layer.index) ?? []}
                 hoverCombo={hoverCombo}
                 onHoverCombo={setHoverCombo}
                 onTrackball={() => changeTab("trackball")}
