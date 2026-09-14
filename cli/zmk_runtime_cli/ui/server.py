@@ -3,14 +3,16 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import re
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
 
-from .. import holdtap_client, macro_dsl, rip_client
-from ..backup import append_backup, read_backup_log, snapshot_path
+from .. import backup, holdtap_client, macro_dsl, rip_client
+from ..backup import (append_backup, read_backup_log, read_ui_meta, snapshot_path,
+                      write_ui_meta)
 from .features import FEATURE_KEYS, build_features_doc
 from .native_client import RpcError
 from .session import DeviceSession
@@ -390,6 +392,104 @@ def api_trackball_reset(session, body):
     return 200, {"ok": bool(res.get("ok")), "error": res.get("error") or ""}
 
 
+# ---- UI-only metadata: layer groups ---------------------------------------
+# Groups exist so twelve layers read as "Apple / Windows / Android" instead of
+# twelve names. The firmware knows nothing about them, so they live in
+# .zmkrt-ui.json and no route here touches the device — except the *suggestion*
+# below, which reads layer names to propose a first set of groups.
+
+#: The fixed palette a group's colour must come from. "zinc" is the UI's
+#: colour for "ungrouped", so a real group should not normally take it.
+GROUP_COLORS = ("zinc", "sky", "emerald", "amber", "violet", "rose", "orange")
+
+MAX_GROUP_NAME = 32
+
+#: (predicate on the upper-cased layer name, group name, colour), in the order
+#: the suggestion is offered.
+SUGGEST_RULES = (
+    (lambda n: n == "DEFAULT", "Windows", "violet"),
+    (lambda n: n.startswith("APPLE"), "Apple", "sky"),
+    (lambda n: n.startswith("ANDROID"), "Android", "emerald"),
+)
+
+
+def _slug(name: str, taken: set[str]) -> str:
+    """An ASCII id for a group name. Japanese (or any non-ASCII) names slug to
+    nothing, hence the "group" fallback; collisions get a counter."""
+    base = re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-") or "group"
+    slug, n = base, 2
+    while slug in taken:
+        slug, n = f"{base}-{n}", n + 1
+    taken.add(slug)
+    return slug
+
+
+def _validate_groups(body: dict) -> list[dict]:
+    groups = body.get("groups")
+    if not isinstance(groups, list):
+        raise HttpError(400, "'groups' must be a list")
+    out: list[dict] = []
+    taken: set[str] = set()
+    seen_layers: dict[int, str] = {}
+    for g in groups:
+        if not isinstance(g, dict):
+            raise HttpError(400, "each group must be an object")
+        name = g.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise HttpError(400, "group 'name' must be a non-empty string")
+        if len(name) > MAX_GROUP_NAME:
+            raise HttpError(400, f"group 'name' must be at most {MAX_GROUP_NAME} characters")
+        color = g.get("color")
+        if color not in GROUP_COLORS:
+            raise HttpError(400, f"group 'color' must be one of {sorted(GROUP_COLORS)}")
+        layers = g.get("layers")
+        if not isinstance(layers, list) or not all(
+                isinstance(x, int) and not isinstance(x, bool) for x in layers):
+            raise HttpError(400, "group 'layers' must be a list of integers")
+        for lid in layers:
+            if lid in seen_layers:
+                raise HttpError(400, f"layer {lid} is already in group '{seen_layers[lid]}'")
+            seen_layers[lid] = name
+        out.append({"id": _slug(name, taken), "name": name, "color": color,
+                    "layers": list(layers)})
+    return out
+
+
+def _suggest_groups(session) -> list[dict]:
+    """A first set of groups read off the layer names, offered (never saved) when
+    .zmkrt-ui.json does not exist yet. Only worth showing when it splits the
+    keymap in two or more ways."""
+    try:
+        with session:
+            layers = session.keymap_client().get_layers()
+    except Exception:  # noqa: BLE001  a suggestion is never worth a failed GET
+        return []
+    out = []
+    taken: set[str] = set()
+    for match, name, color in SUGGEST_RULES:
+        ids = [l["id"] for l in layers if match((l.get("name") or "").upper())]
+        if ids:
+            out.append({"id": _slug(name, taken), "name": name, "color": color,
+                        "layers": ids})
+    return out if len(out) >= 2 else []
+
+
+def api_ui_meta(session, _):
+    meta = read_ui_meta()
+    if not backup.UI_META.exists():
+        suggested = _suggest_groups(session)
+        if suggested:
+            meta = {**meta, "suggested": suggested}
+    return 200, meta
+
+
+def api_ui_meta_set(session, body):
+    meta = {"version": 1, "groups": _validate_groups(body)}
+    write_ui_meta(meta)
+    append_backup({"op": "ui_meta_set", "groups": meta["groups"]})
+    return 200, meta
+
+
 ROUTES = {
     ("GET", "/api/state"): api_state,
     ("GET", "/api/features"): api_features,
@@ -414,6 +514,8 @@ ROUTES = {
     ("POST", "/api/snapshot"): api_snapshot,
     ("POST", "/api/reset"): api_reset,
     ("GET", "/api/backup-log"): api_backup_log,
+    ("GET", "/api/ui-meta"): api_ui_meta,
+    ("POST", "/api/ui-meta"): api_ui_meta_set,
 }
 
 
