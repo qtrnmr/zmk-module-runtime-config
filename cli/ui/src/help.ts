@@ -128,6 +128,26 @@ export const BEHAVIOR_JA: Record<string, string> = {
   "Studio Unlock": "Studio のロック解除",
 };
 
+/** Where a behaviour takes you that its *parameters* never say. `&to_apple_default`
+ *  has one hid_usage parameter and a hard-coded `&to 1` in its own definition,
+ *  so the only way to know it enters APPLE is to write it down here. Values
+ *  follow qtrnmr/zmk-config-roBa config/roBa.keymap; on another keyboard none
+ *  of these names occur and the map is simply never hit.
+ *
+ *  For the three LAYER_TAP_TO_* this is the **tap** side — their hold side is
+ *  param1 and the parameter scan already finds it. */
+export const BEHAVIOR_TARGET_LAYER: Record<string, number> = {
+  TO_LAYER_0: 0,
+  TO_APPLE_DEFAULT: 1,
+  TO_ANDROID: 2,
+  BT_K_WIN: 0,
+  BT_J_MAC: 1,
+  BT_H_FOLD: 2,
+  LAYER_TAP_TO_0: 0,
+  LAYER_TAP_TO_APPLE: 1,
+  LAYER_TAP_TO_ANDROID: 2,
+};
+
 export const BG_BASIC = "基本";
 export const BG_LAYER = "レイヤー";
 export const BG_HOLDTAP = "長押し (hold-tap)";
