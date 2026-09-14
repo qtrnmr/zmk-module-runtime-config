@@ -87,6 +87,7 @@ export default function LayerChips({
   layers,
   current,
   onSelect,
+  activeIds,
   availableLayers,
   maxNameLength,
   disabled,
@@ -107,6 +108,8 @@ export default function LayerChips({
   layers: Layer[];
   current: number;
   onSelect(index: number): void;
+  /** Layer *ids* the firmware reports as active (練習モード). */
+  activeIds?: Set<number>;
   availableLayers: number;
   maxNameLength: number;
   disabled: boolean;
@@ -303,6 +306,12 @@ export default function LayerChips({
             >
               {l.index}
             </span>
+            {activeIds?.has(l.id) && (
+              <span
+                title="このレイヤーはいま有効です"
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_4px_#34d399]"
+              />
+            )}
             {!collapsed && <span className="truncate">{layerLabel(l)}</span>}
           </button>
         )}

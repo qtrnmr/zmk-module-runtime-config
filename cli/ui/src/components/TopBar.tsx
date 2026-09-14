@@ -8,11 +8,16 @@ export default function TopBar({
   busy,
   onRefresh,
   loadingFeatures,
+  practice,
+  onPractice,
 }: {
   state: State;
   busy: boolean;
   onRefresh(): void;
   loadingFeatures: boolean;
+  /** Whether 練習モード is running. */
+  practice: boolean;
+  onPractice(): void;
 }) {
   const locked = state.device.lock_state === "LOCKED";
   const [legend, setLegend] = useState(false);
@@ -57,6 +62,19 @@ export default function TopBar({
         className="ml-auto rounded border border-zinc-700 px-2.5 py-1 text-xs hover:bg-zinc-800 disabled:opacity-40"
       >
         ⟳ 再読込
+      </button>
+      <button
+        onClick={onPractice}
+        title="ファームからキー入力を受け取って盤面に映します (P)"
+        aria-pressed={practice}
+        className={
+          "rounded border px-2.5 py-1 text-xs " +
+          (practice
+            ? "border-emerald-500 bg-emerald-500/15 text-emerald-300"
+            : "border-zinc-700 text-zinc-300 hover:bg-zinc-800")
+        }
+      >
+        {practice ? "■ 練習モード" : "▶ 練習モード"}
       </button>
       <button
         onMouseDown={(e) => e.stopPropagation()}

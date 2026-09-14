@@ -26,6 +26,7 @@ cormoran's ZMK fork. This is **NOT in mainline ZMK**.
 | `CONFIG_ZMK_RUNTIME_HOLDTAP` | Runtime-editable hold-tap timing (tapping-term-ms, quick-tap-ms, require-prior-idle-ms, flavor) |
 | `CONFIG_ZMK_RUNTIME_CONDLAYERS` | Runtime-editable conditional layers |
 | `CONFIG_ZMK_RUNTIME_COMBOS` | Runtime-editable combos (binding/timeout/layers; key-positions fixed) |
+| `CONFIG_ZMK_RUNTIME_MONITOR` | Live key / layer / keycode monitor (`zmk__monitor`) — the 練習モード in `zmkrt ui` |
 
 Each feature also has a `_STUDIO_RPC` sub-option (default `y`) to expose it over
 the custom RPC, and capacity options (`_MAX_STEPS`, `_SLOTS`, `_MAX`).

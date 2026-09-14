@@ -72,11 +72,21 @@ the right (`Esc` closes it):
 - The rail's `…` menu holds 変更履歴 / スナップショット / リセット… (and エンコーダ on a layout whose
   knob is not drawn).
 
+**練習モード** (the button right of 再読込, or `P`): the firmware streams what it is doing and the
+board shows it live — pressed keys light up green, the displayed layer follows the highest active
+one, and a strip above the board says what is being sent (`出力: Shift +`), which layers are on, and
+a scrolling log of the last 30 events. Because the data comes from the keyboard and not the browser,
+keys that send no HID at all — a `&mo` hold, a `&lt` hold, a BT key — show up too, and so does an
+encoder turn (`↻ Vol-`). The mode is read-only: it only flips a RAM flag on the device, and editing
+stays possible while it runs. It needs firmware built with `CONFIG_ZMK_RUNTIME_MONITOR`; older
+firmware answers with a toast saying so.
+
 A feature whose custom RPC subsystem the keyboard does not ship says so instead of showing a form.
 Counts that are fixed at build time — macro slots, hold-tap and conditional-layer slots, combo
 key-positions — are read-only, with the reason shown.
 
-For API users: `GET /api/features` takes an optional `?only=macros,holdtaps,condlayers,combos,encoder,trackball`
+For API users: `GET /api/events` is the practice-mode stream (Server-Sent Events, `layers` / `key` /
+`keycode`, or one `unavailable` event on firmware without `zmk__monitor`). `GET /api/features` takes an optional `?only=macros,holdtaps,condlayers,combos,encoder,trackball`
 to collect just those features (an unknown name is a 400). The UI uses it so one edit costs a couple
 of serial round trips instead of the ~40 a full document takes.
 

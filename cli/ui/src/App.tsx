@@ -1,7 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { layerActivators, type Activator } from "./activators";
-import { getFeatures, getState, getUiMeta, layerOp, putUiMeta, resetDevice, snapshot } from "./api";
-import { activeCombos } from "./board";
+import {
+  getFeatures,
+  getState,
+  getUiMeta,
+  layerOp,
+  openEvents,
+  putUiMeta,
+  resetDevice,
+  snapshot,
+} from "./api";
+import { activeCombos, labelText } from "./board";
+import {
+  followIndex,
+  initial as initialPractice,
+  reduce as reducePractice,
+  reverseKeycodes,
+  type PracticeCtx,
+  type PracticeState,
+} from "./practice";
 import { decorFor } from "./decor";
 import ChangeLog from "./components/ChangeLog";
 import ComboList from "./components/ComboList";
@@ -10,6 +27,7 @@ import Inspector from "./components/Inspector";
 import Keyboard from "./components/Keyboard";
 import LayerChips, { type RemovedLayer } from "./components/LayerChips";
 import LayerEntry from "./components/LayerEntry";
+import PracticeStrip from "./components/PracticeStrip";
 import Rail from "./components/Rail";
 import Toast from "./components/Toast";
 import TopBar from "./components/TopBar";
@@ -44,6 +62,11 @@ export default function App() {
   );
   /** UI-only layer groups; null until /api/ui-meta answers. */
   const [meta, setMeta] = useState<UiMeta | null>(null);
+  /** 練習モード: null when off, the live board state when on. */
+  const [practice, setPractice] = useState<PracticeState | null>(null);
+  /** Closes the EventSource. Kept in a ref so the toggle and the unmount
+   *  cleanup can both reach the *current* stream. */
+  const stopEvents = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     localStorage.setItem(SHOW_COMBOS_KEY, showCombos ? "1" : "0");
@@ -157,6 +180,59 @@ export default function App() {
     [run, refetchMeta],
   );
 
+  /** The layers as of the last render, for the event callback (which is
+   *  created once and must not close over a stale list). */
+  const layersRef = useRef<Layer[]>([]);
+
+  const stopPractice = useCallback(() => {
+    stopEvents.current?.();
+    stopEvents.current = null;
+    setPractice(null);
+  }, []);
+
+  /** Everything the reducer needs to name a position, a keycode or a layer.
+   *  Read off the state the board is already drawing, so the log says the same
+   *  words the caps do. */
+  const practiceCtx = useRef<PracticeCtx>({});
+
+  const startPractice = useCallback(() => {
+    setSelection(null); // the board wants the width
+    setPractice(initialPractice());
+    stopEvents.current = openEvents(
+      (ev) => {
+        setPractice((prev) => (prev ? reducePractice(prev, ev, practiceCtx.current) : prev));
+        // The displayed layer follows the highest active one; a layer the user
+        // picked by hand therefore holds only until the next layer change.
+        if (ev.type === "layers") {
+          setLayerIdx(followIndex({ highest: ev.highest } as PracticeState, layersRef.current));
+        }
+      },
+      (message) => {
+        setToast(message);
+        stopPractice();
+      },
+    );
+  }, [stopPractice]);
+
+  useEffect(() => () => stopEvents.current?.(), []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "p" && e.key !== "P") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = document.activeElement as HTMLElement | null;
+      const typing =
+        el &&
+        (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      e.preventDefault();
+      if (practice) stopPractice();
+      else startPractice();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [practice, startPractice, stopPractice]);
+
   const changeTab = useCallback((t: Tab) => {
     setTab(t);
     if (t !== "keymap") setSelection(null);
@@ -166,6 +242,14 @@ export default function App() {
   if (!state) return <div className="p-8 text-zinc-400">キーボードを読み込み中…</div>;
 
   const layer = state.keymap.layers[Math.min(layerIdx, state.keymap.layers.length - 1)];
+
+  layersRef.current = state.keymap.layers;
+  practiceCtx.current = {
+    rev: reverseKeycodes(state.keycodes),
+    layerNames: Object.fromEntries(state.keymap.layers.map((l) => [l.id, l.name || `L${l.index}`])),
+    capLabels: Object.fromEntries(layer.bindings.map((b) => [b.pos, labelText(b.label)])),
+  };
+  const activeLayerIds = practice ? new Set(practice.activeIds) : undefined;
 
   const doSnapshot = async () => {
     setBusy(true);
@@ -205,14 +289,25 @@ export default function App() {
           busy={busy}
           onRefresh={() => void refetch()}
           loadingFeatures={loadingFeatures}
+          practice={practice !== null}
+          onPractice={() => (practice ? stopPractice() : startPractice())}
         />
-        {locked ? (
-          <div className="bg-amber-500/20 px-4 py-2 text-sm text-amber-200">
-            デバイスが LOCKED です。SETTING 層の &amp;studio_unlock を押して unlock してください。
-          </div>
-        ) : (
-          <div />
-        )}
+        {/* One grid row, however many banners: the row count is fixed. */}
+        <div>
+          {locked && (
+            <div className="bg-amber-500/20 px-4 py-2 text-sm text-amber-200">
+              デバイスが LOCKED です。SETTING 層の &amp;studio_unlock を押して unlock してください。
+            </div>
+          )}
+          {practice && (
+            <PracticeStrip
+              practice={practice}
+              layers={state.keymap.layers}
+              onChange={setPractice}
+              onStop={stopPractice}
+            />
+          )}
+        </div>
 
         {tab === "keymap" ? (
           <div className="grid min-h-0 grid-cols-[auto_1fr]">
@@ -223,6 +318,7 @@ export default function App() {
                 layers={state.keymap.layers}
                 current={layer.index}
                 onSelect={setLayerIdx}
+                activeIds={activeLayerIds}
                 availableLayers={state.keymap.available_layers}
                 maxNameLength={state.keymap.max_layer_name_length}
                 disabled={!!locked || busy}
@@ -267,7 +363,7 @@ export default function App() {
               )}
             </div>
             <div className="flex min-h-0 flex-col">
-              {!entryHidden && (
+              {!entryHidden && !practice && (
                 <LayerEntry
                   layer={layer}
                   layers={state.keymap.layers}
@@ -304,6 +400,7 @@ export default function App() {
                   hoverCombo={hoverCombo}
                   onHoverCombo={setHoverCombo}
                   onTrackball={() => changeTab("trackball")}
+                  pressed={practice?.pressed}
                 />
               </div>
             </div>

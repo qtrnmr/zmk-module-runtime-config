@@ -1,3 +1,4 @@
+import type { PracticeEvent } from "./practice";
 import type {
   Binding,
   FeatureKey,
@@ -36,6 +37,45 @@ export interface KeySetBody {
 }
 
 export const getState = () => call<State>("GET", "/api/state");
+
+// ---- 練習モード -----------------------------------------------------------
+
+/**
+ * Subscribe to the firmware's live key / layer / keycode stream.
+ *
+ * Returns the unsubscribe function; calling it closes the EventSource, which
+ * is what tells the server to switch the firmware's stream off again. An
+ * `unavailable` event means this firmware was built without zmk__monitor —
+ * the stream ends there, so the caller should turn the mode off rather than
+ * wait.
+ */
+export function openEvents(
+  onEvent: (ev: PracticeEvent) => void,
+  onUnavailable: (message: string) => void,
+): () => void {
+  const src = new EventSource("/api/events");
+  const parse = (name: PracticeEvent["type"]) => (e: MessageEvent) => {
+    try {
+      onEvent({ ...(JSON.parse(e.data) as object), type: name } as PracticeEvent);
+    } catch {
+      /* a half-written frame is not worth a crash */
+    }
+  };
+  src.addEventListener("key", parse("key"));
+  src.addEventListener("layers", parse("layers"));
+  src.addEventListener("keycode", parse("keycode"));
+  src.addEventListener("unavailable", (e) => {
+    let message = "練習モードを開始できませんでした";
+    try {
+      message = (JSON.parse((e as MessageEvent).data) as { error?: string }).error ?? message;
+    } catch {
+      /* keep the default */
+    }
+    src.close();
+    onUnavailable(message);
+  });
+  return () => src.close();
+}
 
 export const setKey = (b: KeySetBody) =>
   call<{ ok: boolean; error?: string; binding?: Binding }>("POST", "/api/key", b);

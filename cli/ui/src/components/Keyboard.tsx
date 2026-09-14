@@ -148,6 +148,7 @@ export default function Keyboard({
   onHoverCombo,
   onTrackball,
   activators,
+  pressed,
   behaviors,
   keycodes,
   layers,
@@ -168,6 +169,8 @@ export default function Keyboard({
   onTrackball(): void;
   /** Every way into the layer being shown; only the key-shaped ones are drawn. */
   activators: Activator[];
+  /** Key positions the firmware says are down right now (練習モード). */
+  pressed?: Set<number>;
   /** Only for the hover tooltip: what a behaviour id and its params mean. */
   behaviors: Behavior[];
   keycodes: Record<string, number>;
@@ -279,6 +282,9 @@ export default function Keyboard({
   }, [combos, hoverCombo, selCombo]);
   /** Caps of the hovered/selected combo take the same accent as its bridges. */
   const litColor = "#38bdf8";
+  /** emerald-500 / emerald-400: a pressed cap, lit by the firmware. */
+  const downColor = "#10b981";
+  const downStroke = "#34d399";
 
   if (!boxes.length) return <div className="p-8 text-zinc-500">レイアウト情報がありません。</div>;
 
@@ -311,6 +317,7 @@ export default function Keyboard({
           const ghost = transparent ? base.bindings[b.pos]?.label : undefined;
           const isSel = selPos === b.pos;
           const isLit = lit.has(b.pos);
+          const isDown = pressed?.has(b.pos) ?? false;
           // A ▽ key says what it inherits; everything else states its own label.
           const head = transparent ? (
             <TipHead>▽ → ベース層: {labelText(ghost)}</TipHead>
@@ -381,20 +388,24 @@ export default function Keyboard({
                 rx={7}
                 filter="url(#capShadow)"
                 className={
-                  (isLit
+                  (isDown || isLit
                     ? ""
                     : transparent
                       ? "fill-zinc-900/60 group-hover:fill-zinc-800"
                       : "fill-zinc-800 group-hover:fill-zinc-700") +
                   " " +
-                  (isSel ? "stroke-sky-400" : isLit ? "" : "stroke-zinc-700")
+                  (isSel ? "stroke-sky-400" : isDown || isLit ? "" : "stroke-zinc-700")
                 }
                 style={
-                  isLit
-                    ? { fill: litColor, fillOpacity: 0.18, stroke: isSel ? undefined : litColor }
-                    : undefined
+                  // A press has to land instantly — only the fade back to rest
+                  // is worth animating, or the board lags behind the fingers.
+                  isDown
+                    ? { fill: downColor, fillOpacity: 0.35, stroke: isSel ? undefined : downStroke }
+                    : isLit
+                      ? { fill: litColor, fillOpacity: 0.18, stroke: isSel ? undefined : litColor }
+                      : { transition: pressed ? "fill 120ms ease-out" : undefined }
                 }
-                strokeWidth={isSel ? 3 : isLit ? 2 : 1}
+                strokeWidth={isSel ? 3 : isDown ? 2 : isLit ? 2 : 1}
               />
               {sensor !== undefined && (
                 // A horizontal wheel seen from above: ridges across the cap and
