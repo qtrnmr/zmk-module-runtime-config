@@ -29,6 +29,32 @@ describe("searchKeycodes", () => {
     expect(searchKeycodes(KEYCODE_NAMES, "かな")).toContain("LANGUAGE_1");
   });
 
+  it("finds a symbol by the character it prints, not by its name", () => {
+    // Nobody guesses that `+` is spelled PLUS — that is the whole complaint.
+    expect(searchKeycodes(KEYCODE_NAMES, "+")[0]).toBe("PLUS");
+    expect(searchKeycodes(KEYCODE_NAMES, "?")[0]).toBe("QMARK");
+    expect(searchKeycodes(KEYCODE_NAMES, "(")[0]).toBe("LPAR");
+    expect(searchKeycodes(KEYCODE_NAMES, "!")[0]).toBe("EXCL");
+    expect(searchKeycodes(KEYCODE_NAMES, "~")[0]).toBe("TILD");
+    expect(searchKeycodes(KEYCODE_NAMES, "@")[0]).toBe("ATSN");
+    expect(searchKeycodes(KEYCODE_NAMES, "^")[0]).toBe("CRRT");
+    expect(searchKeycodes(KEYCODE_NAMES, "<")[0]).toBe("LABT");
+    expect(searchKeycodes(KEYCODE_NAMES, "_")[0]).toBe("UNDER");
+    expect(searchKeycodes(KEYCODE_NAMES, "'")[0]).toBe("APOSTROPHE");
+  });
+
+  it("offers the keypad twin after the plain key, never before it", () => {
+    expect(searchKeycodes(KEYCODE_NAMES, "+").slice(0, 2)).toEqual(["PLUS", "KPLS"]);
+    // KPLS is four characters and PLUS is four too, so only the explicit order
+    // keeps them this way round.
+    expect(searchKeycodes(KEYCODE_NAMES, "(").slice(0, 2)).toEqual(["LPAR", "KP_LPAR"]);
+  });
+
+  it("does not treat a letter as a symbol", () => {
+    // `a` is an ordinary prefix search; the symbol table must not shadow it.
+    expect(searchKeycodes(KEYCODE_NAMES, "a")[0]).toBe("A");
+  });
+
   it("lists everything for an empty query and nothing for a miss", () => {
     expect(searchKeycodes(KEYCODE_NAMES, "", 5)).toEqual(KEYCODE_NAMES.slice(0, 5));
     expect(searchKeycodes(KEYCODE_NAMES, "zzzz")).toEqual([]);

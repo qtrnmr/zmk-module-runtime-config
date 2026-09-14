@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MOD_HELP, keycodeHelp } from "../help";
+import { SHIFTED } from "../fullKeyboard";
 import { MOD_BITS, MOD_ORDER, joinMods, splitMods, type ModName } from "../params";
-import { pretty } from "../prettyKeycode";
+import { PRETTY_MAP, pretty } from "../prettyKeycode";
 import FullKeyboardPicker from "./FullKeyboardPicker";
 import { Info } from "./Tooltip";
 
@@ -11,6 +12,37 @@ const MOD_GLYPH: Record<ModName, string> = {
 };
 
 const MAX_ROWS = 60;
+
+/** Numpad twins: `+` should offer `PLUS` first but still mention `KPLS`, since
+ *  "the + key" means one or the other depending on which + you are looking at. */
+const KEYPAD_SYMBOLS: Record<string, string> = {
+  "+": "KPLS", "-": "KP_MINUS", "*": "KP_MULTIPLY", "/": "KP_SLASH", "=": "KP_EQUAL",
+  ".": "KP_DOT", ",": "KP_COMMA", "(": "KP_LPAR", ")": "KP_RPAR",
+};
+
+/**
+ * The character a key prints, back to the keycodes that print it — so typing
+ * the symbol finds the name nobody can guess. `+` is the case that started
+ * this: it is spelled `PLUS`, and no substring of `PLUS` is `+`.
+ *
+ * Built from the two tables that already know: what a cap draws (PRETTY_MAP)
+ * and what Shift turns a cap into (SHIFTED). Order inside each entry is the
+ * order the list offers them, so the plain key wins over its keypad twin.
+ */
+export const SYMBOL_NAMES: Record<string, string[]> = (() => {
+  const out: Record<string, string[]> = {};
+  const add = (sym: string, name: string) => {
+    // Single, non-alphanumeric characters only: PRETTY_MAP also holds words
+    // like "Ctrl" and "かな", which the ordinary name/description search
+    // already covers.
+    if ([...sym].length !== 1 || /[0-9A-Za-z]/.test(sym)) return;
+    (out[sym] ??= []).push(name);
+  };
+  for (const [name, sym] of Object.entries(PRETTY_MAP)) add(sym, name);
+  for (const { label, code } of Object.values(SHIFTED)) add(label, code);
+  for (const [sym, name] of Object.entries(KEYPAD_SYMBOLS)) add(sym, name);
+  return out;
+})();
 
 /** Search ranking: what you started typing beats what merely contains it, and
  *  both beat a hit in the Japanese description — so `PLU` offers `PLUS` first
@@ -22,15 +54,27 @@ function rankOf(name: string, needle: string): number {
   return (keycodeHelp(name) ?? "").toLowerCase().includes(needle) ? 2 : 3;
 }
 
-/** Candidates for `q`, best first: prefix, then substring, then description,
- *  and the shorter name inside each band. An empty query lists everything. */
+/** Candidates for `q`, best first: the symbol you typed, then prefix, then
+ *  substring, then description, and the shorter name inside each band. An
+ *  empty query lists everything. */
 export function searchKeycodes(names: string[], q: string, max = MAX_ROWS): string[] {
-  const needle = q.trim().toLowerCase();
+  const typed = q.trim();
+  const needle = typed.toLowerCase();
   if (!needle) return names.slice(0, max);
+  const bySymbol = SYMBOL_NAMES[typed] ?? [];
   return names
-    .map((n) => [n, rankOf(n, needle)] as const)
+    .map((n) => {
+      const sym = bySymbol.indexOf(n);
+      // A symbol hit outranks every text match, and keeps SYMBOL_NAMES' order
+      // rather than falling back to "shortest name wins" — which would put
+      // KPLS above PLUS for `+`.
+      return [n, sym >= 0 ? -1 : rankOf(n, needle), sym] as const;
+    })
     .filter(([, r]) => r < 3)
-    .sort((a, b) => a[1] - b[1] || a[0].length - b[0].length || a[0].localeCompare(b[0]))
+    .sort(
+      (a, b) =>
+        a[1] - b[1] || a[2] - b[2] || a[0].length - b[0].length || a[0].localeCompare(b[0]),
+    )
     .slice(0, max)
     .map(([n]) => n);
 }
@@ -88,7 +132,11 @@ export default function KeycodePicker({
   };
 
   const pick = (n: string) => {
-    onChange(joinMods(keycodes[n], mods));
+    // A shifted symbol carries its own modifier: PLUS *is* EQL with the LS bit
+    // set. joinMods() masks the base away, so union the keycode's own mods
+    // with the toggles — otherwise picking `+` quietly commits `=`.
+    const own = splitMods(keycodes[n]);
+    onChange(joinMods(own.base, [...new Set([...own.mods, ...mods])]));
     setQ("");
     setOpen(false);
   };
