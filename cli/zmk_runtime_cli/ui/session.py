@@ -35,6 +35,11 @@ class DeviceSession:
         # 練習モード. `None` = not probed yet, `False` = this firmware has no
         # zmk__monitor. Probed once per handle by ensure_monitor_index().
         self._monitor_index: int | None | bool = None
+        # How many /api/events streams are open. The firmware flag is flipped
+        # on for the first and off after the last, so an idle browser leaves
+        # the keyboard silent.
+        self.monitor_clients = 0
+        self._monitor_lock = threading.Lock()
 
     # -- serial lifecycle -------------------------------------------------
     @property
@@ -111,7 +116,10 @@ class DeviceSession:
         return RipClient(_ser=self.serial)
 
     def monitor_client(self) -> MonitorClient:
-        return MonitorClient(_ser=self.serial)
+        client = MonitorClient(_ser=self.serial)
+        if isinstance(self._monitor_index, int):
+            client._index = self._monitor_index  # already resolved; skip the round trip
+        return client
 
     # -- 練習モード -------------------------------------------------------
     def ensure_monitor_index(self) -> bool:
@@ -142,3 +150,37 @@ class DeviceSession:
 
     def invalidate_behaviors(self) -> None:
         self._behaviors = None
+
+    def monitor_open(self):
+        """Subscribe to the stream and start it. Returns (queue, layer_state).
+
+        Subscribing *before* enable() so no notification falls in the gap; the
+        firmware flag is only flipped for the first client."""
+        q = self.serial.subscribe()
+        with self._monitor_lock:
+            self.monitor_clients += 1
+            first = self.monitor_clients == 1
+        try:
+            with self:
+                client = self.monitor_client()
+                if first:
+                    client.enable()
+                return q, client.get_layers()
+        except Exception:
+            self.monitor_close(q)
+            raise
+
+    def monitor_close(self, q) -> None:
+        """Unsubscribe; turn the firmware stream off again with the last client."""
+        self.serial.unsubscribe(q)
+        with self._monitor_lock:
+            if self.monitor_clients > 0:
+                self.monitor_clients -= 1
+            last = self.monitor_clients == 0
+        if not last:
+            return
+        try:
+            with self:
+                self.monitor_client().disable()
+        except Exception:  # noqa: BLE001  the port may already be gone
+            pass

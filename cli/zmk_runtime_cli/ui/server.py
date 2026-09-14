@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import queue
 import re
 import threading
 import webbrowser
@@ -490,6 +491,75 @@ def api_ui_meta_set(session, body):
     return 200, meta
 
 
+# ---- GET /api/events: the 練習モード stream (Server-Sent Events) -----------
+#: A comment line every this many idle seconds, so a proxy (or a sleeping
+#: laptop) does not decide the connection is dead.
+KEEPALIVE_SECONDS = 15
+
+UNAVAILABLE_MESSAGE = (
+    "このファームには練習モード (zmk__monitor) がありません。焼き直しが必要です"
+)
+
+
+def sse_event(name: str, payload: dict) -> bytes:
+    return f"event: {name}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n".encode()
+
+
+def api_events(handler, session) -> None:
+    """Stream key / layer / keycode events until the browser goes away.
+
+    Deliberately outside ROUTES: this one writes to the socket itself and must
+    never hold the session lock while it waits, or every other request would
+    block behind an open practice tab.
+    """
+    handler.send_response(200)
+    handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
+    handler.send_header("Cache-Control", "no-cache")
+    handler.send_header("Connection", "keep-alive")
+    handler.send_header("X-Accel-Buffering", "no")
+    handler.end_headers()
+    # After end_headers, because send_header("Connection", "keep-alive") clears
+    # it. No Content-Length ever follows, so the socket must not be reused:
+    # otherwise the server sits in readline() waiting for a second request
+    # while the browser waits for a body that never ends.
+    handler.close_connection = True
+    out = handler.wfile
+
+    try:
+        with session:
+            available = session.ensure_monitor_index()
+    except Exception:  # noqa: BLE001  a dead port is "unavailable" too
+        available = False
+    if not available:
+        _sse_write(out, sse_event("unavailable", {"error": UNAVAILABLE_MESSAGE}))
+        return
+
+    try:
+        q, layers = session.monitor_open()
+    except Exception as e:  # noqa: BLE001
+        _sse_write(out, sse_event("unavailable", {"error": f"{type(e).__name__}: {e}"}))
+        return
+
+    try:
+        _sse_write(out, sse_event("layers", layers))
+        while True:
+            try:
+                event = q.get(timeout=KEEPALIVE_SECONDS)
+            except queue.Empty:
+                _sse_write(out, b": keep-alive\n\n")
+                continue
+            _sse_write(out, sse_event(event.get("type", "event"), event))
+    except (BrokenPipeError, ConnectionResetError, OSError, ValueError):
+        pass  # the tab was closed; nothing to report
+    finally:
+        session.monitor_close(q)
+
+
+def _sse_write(out, data: bytes) -> None:
+    out.write(data)
+    out.flush()
+
+
 ROUTES = {
     ("GET", "/api/state"): api_state,
     ("GET", "/api/features"): api_features,
@@ -551,6 +621,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def _dispatch(self, method: str) -> None:
         url = urlsplit(self.path)
+        if (method, url.path) == ("GET", "/api/events"):
+            api_events(self, self.server.session)
+            return
         route = ROUTES.get((method, url.path))
         if route is None:
             if method == "GET" and not url.path.startswith("/api/"):
