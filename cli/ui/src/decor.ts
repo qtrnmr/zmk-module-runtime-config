@@ -8,10 +8,10 @@ export interface Decor {
 
 export const DECOR: Record<string, Decor> = {
   // roBa / roBaish: left encoder above Mute (the empty row-0 slot of column 5),
-  // trackball in the empty row-0 slot of column 6 on the right half.
+  // trackball to the right of Enter in the right-hand thumb cluster, under N/M.
   "Default:43": {
     encoders: [{ sensor: 0, cx: 550, cy: 85, r: 45 }],
-    trackball: { cx: 750, cy: 80, r: 55 },
+    trackball: { cx: 950, cy: 420, r: 55 },
   },
 };
 
