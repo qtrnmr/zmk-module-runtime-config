@@ -17,7 +17,6 @@ import type {
 } from "../types";
 import { layerLabel } from "../types";
 import ComboOverlay from "./ComboOverlay";
-import EncoderKnob from "./EncoderKnob";
 import TrackballDecor from "./TrackballDecor";
 import { useTooltip } from "./Tooltip";
 
@@ -217,7 +216,10 @@ export default function Keyboard({
 
   const selPos = selection?.kind === "key" ? selection.pos : null;
   const selCombo = selection?.kind === "combo" ? selection.index : null;
-  const selSensor = selection?.kind === "encoder" ? selection.sensor : null;
+  const encoderAt = useMemo(
+    () => new Map((decor?.encoders ?? []).map((e) => [e.pos, e.sensor])),
+    [decor],
+  );
 
   /** Keys of the combo the pointer is over, or of the selected one. */
   const lit = useMemo(() => {
@@ -230,18 +232,14 @@ export default function Keyboard({
 
   if (!boxes.length) return <div className="p-8 text-zinc-500">レイアウト情報がありません。</div>;
 
-  // The knobs and the trackball sit outside the key bounds, so fold them in
-  // before padding or they get clipped by the viewBox.
+  // The trackball sits outside the key bounds, so fold it in before padding
+  // or it gets clipped by the viewBox.
   let { minX, minY, maxX, maxY } = bb;
-  const circles = [
-    ...(decor?.encoders ?? []).map((e) => ({ cx: e.cx, cy: e.cy, r: e.r })),
-    ...(decor?.trackball ? [decor.trackball] : []),
-  ];
-  for (const c of circles) {
+  for (const c of decor?.trackball ? [decor.trackball] : []) {
     minX = Math.min(minX, (c.cx - c.r) * UNIT);
     minY = Math.min(minY, (c.cy - c.r) * UNIT);
     maxX = Math.max(maxX, (c.cx + c.r) * UNIT);
-    maxY = Math.max(maxY, (c.cy + c.r) * UNIT + 24); // room for the two captions
+    maxY = Math.max(maxY, (c.cy + c.r) * UNIT);
   }
   const viewBox = [minX - PAD, minY - PAD, maxX - minX + PAD * 2, maxY - minY + PAD * 2].join(" ");
 
@@ -274,7 +272,31 @@ export default function Keyboard({
               <TipHead>tap: {pretty(label.tap)}</TipHead>
             </>
           );
-          const content = bindingTip(binding, label, head);
+          const sensor = encoderAt.get(b.pos);
+          const lb =
+            sensor !== undefined && encoder
+              ? encoderLayerBinding(encoder, sensor, layer.index)
+              : undefined;
+          const content =
+            sensor === undefined ? (
+              bindingTip(binding, label, head)
+            ) : (
+              <>
+                {bindingTip(binding, label, head)}
+                <div className="mt-1 border-t border-zinc-800 pt-1">
+                  <TipHead>エンコーダ {sensor} (押し込み = このキー)</TipHead>
+                  {lb ? (
+                    <>
+                      <p className="text-zinc-300">↻ cw: {labelText(lb.cw.label)}</p>
+                      <p className="text-zinc-300">↺ ccw: {labelText(lb.ccw.label)}</p>
+                      <TipRaw>tap_ms {lb.cw.tap_ms}</TipRaw>
+                    </>
+                  ) : (
+                    <p className="text-zinc-400">このレイヤーには sensor-bindings がありません</p>
+                  )}
+                </div>
+              </>
+            );
           return (
             <g
               key={b.pos}
@@ -308,6 +330,40 @@ export default function Keyboard({
                 }
                 strokeWidth={isSel ? 3 : isLit ? 2 : 1}
               />
+              {sensor !== undefined && (
+                // A horizontal wheel seen from above: ridges across the cap and
+                // the two rotation bindings along its top and bottom edges.
+                <g pointerEvents="none">
+                  {[0.3, 0.42, 0.54, 0.66].map((f) => (
+                    <line
+                      key={f}
+                      x1={b.x + G + 8}
+                      x2={b.x + b.w - G - 8}
+                      y1={b.y + b.h * f}
+                      y2={b.y + b.h * f}
+                      className="stroke-zinc-600/70"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                    />
+                  ))}
+                  <text
+                    x={b.x + b.w / 2}
+                    y={b.y + G + 9}
+                    textAnchor="middle"
+                    className="fill-zinc-400 text-[8px]"
+                  >
+                    ↻ {labelText(lb?.cw.label, "—")}
+                  </text>
+                  <text
+                    x={b.x + b.w / 2}
+                    y={b.y + b.h - G - 4}
+                    textAnchor="middle"
+                    className="fill-zinc-400 text-[8px]"
+                  >
+                    ↺ {labelText(lb?.ccw.label, "—")}
+                  </text>
+                </g>
+              )}
               <g transform={`translate(${b.x + b.w / 2} ${b.y + b.h / 2})`}>
                 {ghost ? <KeyLabel label={ghost} dim /> : <KeyLabel label={label} />}
               </g>
@@ -316,7 +372,7 @@ export default function Keyboard({
                   {"▽"}
                 </text>
               )}
-              {tag(label.behavior) && (
+              {sensor === undefined && tag(label.behavior) && (
                 <text
                   x={b.x + b.w - G - 4}
                   y={b.y + b.h - G - 4}
@@ -342,40 +398,6 @@ export default function Keyboard({
             tipFor={comboTip}
           />
         )}
-
-        {(decor?.encoders ?? []).map((e) => {
-          const lb = encoder ? encoderLayerBinding(encoder, e.sensor, layer.index) : undefined;
-          return (
-            <EncoderKnob
-              key={e.sensor}
-              cx={e.cx * UNIT}
-              cy={e.cy * UNIT}
-              r={e.r * UNIT}
-              sensor={e.sensor}
-              layerBinding={lb}
-              selected={selSensor === e.sensor}
-              onSelect={onSelect}
-              tip={tip}
-              tipContent={
-                <>
-                  <TipHead>
-                    エンコーダ {e.sensor} · レイヤー {layer.index} {layerLabel(layer)}
-                  </TipHead>
-                  {lb ? (
-                    <>
-                      <p className="text-zinc-300">↻ cw: {labelText(lb.cw.label)}</p>
-                      <p className="text-zinc-300">↺ ccw: {labelText(lb.ccw.label)}</p>
-                      <TipBehavior name={lb.cw.label?.behavior} />
-                      <TipRaw>tap_ms {lb.cw.tap_ms}</TipRaw>
-                    </>
-                  ) : (
-                    <p className="text-zinc-400">このレイヤーには sensor-bindings がありません</p>
-                  )}
-                </>
-              }
-            />
-          );
-        })}
 
         {decor?.trackball && (
           <TrackballDecor

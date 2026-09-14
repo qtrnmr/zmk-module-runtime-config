@@ -92,15 +92,17 @@ function DirectionCard({
   );
 }
 
-export default function EncoderInspector({
+/** The cw / ccw editors for one sensor on the current layer. Used by the
+ *  encoder inspector and, for a wheel that sits on a key, by that key's
+ *  inspector. */
+export function EncoderSection({
   state,
   features,
   layer,
   sensor,
   disabled,
   run,
-  onSelect,
-}: InspectorProps & { sensor: number }) {
+}: Pick<InspectorProps, "state" | "features" | "layer" | "disabled" | "run"> & { sensor: number }) {
   const enc = features?.encoder;
   if (!enc) return <p className="text-xs text-zinc-500">機能を読み込み中…</p>;
   if (!enc.available)
@@ -110,22 +112,6 @@ export default function EncoderInspector({
 
   return (
     <>
-      {/* Every sensor is reachable here, even the ones the board does not draw. */}
-      <label className="flex items-center gap-2 text-xs text-zinc-400">
-        センサー
-        <select
-          value={sensor}
-          onChange={(e) => onSelect({ kind: "encoder", sensor: Number(e.target.value) })}
-          className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-100"
-        >
-          {enc.sensors.map((s) => (
-            <option key={s.index} value={s.index}>
-              {s.index} · {s.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
       {lb ? (
         <>
           <DirectionCard
@@ -162,6 +148,47 @@ export default function EncoderInspector({
       ) : (
         <p className="text-xs text-zinc-500">このレイヤーには sensor-bindings がありません</p>
       )}
+    </>
+  );
+}
+
+export default function EncoderInspector({
+  state,
+  features,
+  layer,
+  sensor,
+  disabled,
+  run,
+  onSelect,
+}: InspectorProps & { sensor: number }) {
+  const enc = features?.encoder;
+  return (
+    <>
+      {/* Every sensor is reachable here, even the ones the board does not draw. */}
+      {enc?.available && (
+        <label className="flex items-center gap-2 text-xs text-zinc-400">
+          センサー
+          <select
+            value={sensor}
+            onChange={(e) => onSelect({ kind: "encoder", sensor: Number(e.target.value) })}
+            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-100"
+          >
+            {enc.sensors.map((s) => (
+              <option key={s.index} value={s.index}>
+                {s.index} · {s.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <EncoderSection
+        state={state}
+        features={features}
+        layer={layer}
+        sensor={sensor}
+        disabled={disabled}
+        run={run}
+      />
     </>
   );
 }

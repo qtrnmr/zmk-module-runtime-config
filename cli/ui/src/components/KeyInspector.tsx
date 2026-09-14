@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { setKey } from "../api";
 import { holdtapSlotFor } from "../board";
+import { decorFor } from "../decor";
 import { BEHAVIOR_HELP } from "../help";
 import { Btn } from "../panels/ui";
 import { pretty } from "../prettyKeycode";
 import { layerLabel } from "../types";
 import BindingForm, { type BindingValue } from "./BindingForm";
+import { EncoderSection } from "./EncoderInspector";
 import HoldtapSection from "./HoldtapSection";
 import type { InspectorProps } from "./Inspector";
 import { Info } from "./Tooltip";
@@ -50,6 +52,8 @@ export default function KeyInspector({
   const slot =
     ht?.available && current ? holdtapSlotFor(ht.slots, current.behavior_id) : undefined;
   const isStockHoldTap = !!current && STOCK_HOLD_TAPS.includes(current.label.behavior);
+  /** The wheel that sits on this key, if any: its rotation is edited here too. */
+  const sensor = decorFor(state.layout)?.encoders.find((e) => e.pos === pos)?.sensor;
 
   return (
     <>
@@ -124,6 +128,25 @@ export default function KeyInspector({
             &amp;mt / &amp;lt のタイミングは runtime 編集できません
           </p>
         )
+      )}
+
+      {sensor !== undefined && (
+        <section className="space-y-2">
+          <h3 className="text-xs font-medium text-zinc-400">
+            エンコーダ {sensor} の回転 · レイヤー {layer.index} {layerLabel(layer)}
+          </h3>
+          <p className="text-[11px] text-zinc-500">
+            このキーはロータリーエンコーダの押し込みです。上の割当が押し込み、ここが回転です。
+          </p>
+          <EncoderSection
+            state={state}
+            features={features}
+            layer={layer}
+            sensor={sensor}
+            disabled={disabled}
+            run={run}
+          />
+        </section>
       )}
     </>
   );
