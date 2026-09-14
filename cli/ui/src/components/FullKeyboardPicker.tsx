@@ -11,6 +11,18 @@ function span(w = 1): number {
   return w * UNIT + (w - 1) * GAP;
 }
 
+/** Shrink the label until it fits its cap: `Pause` and `半角/全角` are both
+ *  wider than a 1u key at the default size. Latin is ~6.5px per character at
+ *  11px, CJK ~11px. */
+function fit(label: string, w = 1): string {
+  const room = span(w) - 6;
+  const est = (px: number) =>
+    [...label].reduce((sum, ch) => sum + (/[ -~]/.test(ch) ? px * 0.6 : px), 0);
+  if (est(11) <= room) return "text-[11px]";
+  if (est(9) <= room) return "text-[9px]";
+  return "text-[8px]";
+}
+
 function Cap({
   cap,
   value,
@@ -34,7 +46,7 @@ function Cap({
       title={missing ? `${cap.code} (このファームウェアには無い)` : `${cap.code}\n${keycodeHelp(cap.code) ?? ""}`}
       style={{ width: span(cap.w) }}
       className={
-        "h-8 shrink-0 overflow-hidden rounded border text-[11px] leading-none " +
+        `h-8 shrink-0 overflow-hidden rounded border leading-none ${fit(cap.label, cap.w)} ` +
         (missing
           ? "cursor-not-allowed border-zinc-800 bg-zinc-900/40 text-zinc-700"
           : on

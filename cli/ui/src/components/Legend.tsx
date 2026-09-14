@@ -20,11 +20,13 @@ export const KEY_SYMBOL_ROWS: SymbolRow[] = (() => {
     if (!by.has(symbol)) by.set(symbol, []);
     by.get(symbol)!.push(name);
   }
-  return [...by].map(([symbol, names]) => ({
-    symbol,
-    names,
-    meaning: names.map((n) => KEYCODE_HELP[n]).find(Boolean) ?? names[0],
-  }));
+  return [...by].map(([symbol, names]) => {
+    // Only one meaning can be stated per row, so a glyph shared by keys that
+    // mean different things (^ is LCTRL *and* RCTRL) states none: the names
+    // beside it already say which is which.
+    const helps = [...new Set(names.map((n) => KEYCODE_HELP[n]).filter(Boolean))];
+    return { symbol, names, meaning: helps.length === 1 ? helps[0] : names[0] };
+  });
 })();
 
 /** The four modifier glyphs a wrapped keycode picks up: `LG(TAB)` -> `⌘⇥`. */
@@ -71,7 +73,7 @@ export const BOARD_ROWS: { mark: string; text: string }[] = [
 
 function Head({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="sticky top-0 -mx-3 mb-1 bg-zinc-900/95 px-3 py-1 text-[11px] font-semibold text-zinc-300">
+    <h3 className="-mx-3 mb-1 border-y border-zinc-800 bg-zinc-950/60 px-3 py-1 text-[11px] font-semibold text-zinc-300">
       {children}
     </h3>
   );

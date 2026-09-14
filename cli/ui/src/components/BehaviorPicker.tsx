@@ -47,11 +47,13 @@ export default function BehaviorPicker({
   const flat = useMemo(() => sections.flatMap((s) => s.behaviors), [sections]);
 
   // Opening lands on the behaviour already in the field, so ↑↓ starts from
-  // where you are rather than from the top of the list.
+  // where you are rather than from the top of the list. The index is into the
+  // GROUPED order the list draws, not into the device's own array.
   useEffect(() => {
     if (!open) return;
     setQ("");
-    setActive(Math.max(0, behaviors.findIndex((b) => b.id === value)));
+    const all = groupBehaviors(behaviors).flatMap((s) => s.behaviors);
+    setActive(Math.max(0, all.findIndex((b) => b.id === value)));
     inputRef.current?.focus();
   }, [open]);
 
@@ -145,7 +147,7 @@ export default function BehaviorPicker({
           <div ref={listRef} className="max-h-80 overflow-y-auto">
             {sections.map((sec) => (
               <div key={sec.group}>
-                <div className="sticky top-0 bg-zinc-950/95 px-2 py-1 text-[11px] font-medium text-zinc-500">
+                <div className="sticky top-0 bg-zinc-950 px-2 py-1 text-[11px] font-medium text-zinc-500">
                   {sec.group}
                 </div>
                 {sec.behaviors.map((b) => {
