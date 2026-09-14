@@ -82,4 +82,14 @@ config ZMK_RUNTIME_COMBOS_MAX
 
 endif
 
+config ZMK_RUNTIME_MONITOR
+    bool "Live key/layer monitor over Studio RPC (zmk__monitor)"
+    depends on ZMK_STUDIO
+    default y
+    help
+      Streams key positions, the layer state and sent keycodes to ZMK Studio
+      as zmk__monitor custom notifications, so a host UI can show what the
+      keyboard is doing (練習モード in zmkrt ui). Read-only: enable/disable
+      only flips a RAM flag, and an idle keyboard streams nothing.
+
 endmenu

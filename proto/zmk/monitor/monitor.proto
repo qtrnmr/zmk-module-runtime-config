@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package zmk.monitor;
+
+message Empty {}
+
+message OkResponse {
+    bool ok = 1;
+}
+
+// Whole layer state, not a delta: every notification carries both fields.
+message LayerState {
+    uint32 mask    = 1; // zmk_keymap_layer_state(): bit per layer *id*
+    uint32 highest = 2; // zmk_keymap_highest_layer_active(): layer *index*
+}
+
+message KeyEvent {
+    uint32 position = 1;
+    bool   pressed  = 2;
+    uint32 source   = 3; // ZMK_POSITION_STATE_CHANGE_SOURCE_LOCAL (255) = this half, else peripheral index
+}
+
+message KeycodeEvent {
+    uint32 usage_page = 1; // 0x07 keyboard, 0x0C consumer
+    uint32 keycode    = 2;
+    bool   pressed    = 3;
+    uint32 modifiers  = 4; // implicit | explicit, ZMK HID modifier bitmask
+}
+
+message Notification {
+    oneof type {
+        KeyEvent     key     = 1;
+        LayerState   layers  = 2;
+        KeycodeEvent keycode = 3;
+    }
+}
+
+message Request {
+    oneof request_type {
+        Empty get_layers = 1;
+        Empty enable     = 2;
+        Empty disable    = 3;
+    }
+}
+
+message Response {
+    oneof response_type {
+        LayerState layers = 1;
+        OkResponse ok     = 2;
+    }
+}

@@ -90,6 +90,7 @@ CONFIG_ZMK_RUNTIME_CONDLAYERS=y               # runtime-editable conditional lay
 CONFIG_ZMK_RUNTIME_CONDLAYERS_STUDIO_RPC=y    # expose conditional layers over RPC
 CONFIG_ZMK_RUNTIME_COMBOS=y                   # runtime-editable combos
 CONFIG_ZMK_RUNTIME_COMBOS_STUDIO_RPC=y        # expose combos over RPC
+CONFIG_ZMK_RUNTIME_MONITOR=y                  # live key/layer monitor (zmkrt ui 練習モード)
 # companions (optional — requires the companion west.yml entries above):
 CONFIG_ZMK_RUNTIME_INPUT_PROCESSOR=y          # trackball runtime (companion module)
 CONFIG_ZMK_RUNTIME_INPUT_PROCESSOR_STUDIO_RPC=y
