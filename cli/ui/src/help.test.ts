@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  BEHAVIOR_GROUPS,
+  BEHAVIOR_GROUP_ORDER,
   BEHAVIOR_HELP,
+  BEHAVIOR_JA,
   KEYCODE_HELP,
   MOD_HELP,
   TB_OTHER,
   TRACKBALL_GROUPS,
   TRACKBALL_HELP,
+  behaviorSummary,
+  groupBehaviors,
   groupTrackballFields,
   keycodeHelp,
 } from "./help";
@@ -61,6 +66,49 @@ describe("dictionaries are complete", () => {
 
   it.each(MOD_ORDER)("modifier %s has help", (m) => {
     expect(MOD_HELP[m], m).toBeTruthy();
+  });
+
+  // The picker shows a Japanese name and a group for every behaviour it can
+  // explain, so a new BEHAVIOR_HELP entry fails here until it gets both.
+  it.each(Object.keys(BEHAVIOR_HELP))("behavior %s has a Japanese name", (name) => {
+    expect(BEHAVIOR_JA[name], name).toBeTruthy();
+  });
+
+  it.each(Object.keys(BEHAVIOR_HELP))("behavior %s has a known group", (name) => {
+    expect(BEHAVIOR_GROUP_ORDER, name).toContain(BEHAVIOR_GROUPS[name]);
+  });
+
+  it("says the whole roBa behaviour list in Japanese", () => {
+    for (const name of BEHAVIORS) expect(BEHAVIOR_JA[name], name).toBeTruthy();
+  });
+});
+
+describe("groupBehaviors", () => {
+  it("orders the sections and the rows inside them", () => {
+    const got = groupBehaviors(
+      ["Bluetooth", "Mod-Tap", "Transparent", "Key Press", "Momentary Layer"].map(
+        (display_name) => ({ display_name }),
+      ),
+    );
+    expect(got.map((g) => g.group)).toEqual([
+      "基本",
+      "レイヤー",
+      "長押し (hold-tap)",
+      "Bluetooth・システム",
+    ]);
+    expect(got[0].behaviors.map((b) => b.display_name)).toEqual(["Key Press", "Transparent"]);
+  });
+
+  it("puts another keyboard's behaviour into その他", () => {
+    const got = groupBehaviors([{ display_name: "Key Press" }, { display_name: "zzz_custom" }]);
+    expect(got.map((g) => g.group)).toEqual(["基本", "その他"]);
+  });
+});
+
+describe("behaviorSummary", () => {
+  it("keeps only the first sentence, and says nothing for an unknown name", () => {
+    expect(behaviorSummary("Key Press")).toBe("HID のキーコードを 1 つ送る (&kp)。");
+    expect(behaviorSummary("zzz_custom")).toBe("");
   });
 });
 

@@ -81,6 +81,151 @@ export const BEHAVIOR_HELP: Record<string, string> = {
   BT_K_WIN: "BT プロファイル 1 (職場 Windows) を選び、続けてレイヤー 0 (DEFAULT) に切り替えるマクロ。",
 };
 
+/** Japanese name for a behaviour, so the picker and the "現在" card can say what
+ *  a key does without the user knowing the ZMK spelling. Never contradicts
+ *  BEHAVIOR_HELP above; the roBa-only entries follow config/roBa.keymap. */
+export const BEHAVIOR_JA: Record<string, string> = {
+  "Key Press": "キー入力",
+  Transparent: "透過 (下のレイヤーに任せる)",
+  None: "無効",
+  "Key Toggle": "キーを押しっぱなしにトグル",
+  "Key Repeat": "直前のキーを繰り返す",
+  "Caps Word": "単語だけ大文字",
+  "Grave/Escape": "Esc (修飾付きで `)",
+  "Sticky Key": "次の 1 打だけ修飾",
+
+  "Momentary Layer": "押している間レイヤー",
+  "To Layer": "レイヤーへ切替",
+  "Toggle Layer": "レイヤーをトグル",
+  "Sticky Layer": "次の 1 打だけレイヤー",
+
+  "Mod-Tap": "長押し修飾 / タップでキー",
+  "Layer-Tap": "長押しレイヤー / タップでキー",
+  LAYER_TAP_TO_0: "長押しレイヤー / タップで Windows に戻る+キー",
+  LAYER_TAP_TO_APPLE: "長押しレイヤー / タップで Mac に戻る+キー",
+  LAYER_TAP_TO_ANDROID: "長押しレイヤー / タップで Android に戻る+キー",
+
+  rt_macro: "ランタイムマクロ",
+  TO_LAYER_0: "Windows に戻ってキー入力",
+  TO_APPLE_DEFAULT: "Mac に戻ってキー入力",
+  TO_ANDROID: "Android に戻ってキー入力",
+  BT_H_FOLD: "BT 3 (Fold) + Android 層へ",
+  BT_J_MAC: "BT 0 (Mac mini) + Apple 層へ",
+  BT_K_WIN: "BT 1 (職場 Windows) + Windows 層へ",
+
+  "Mouse Key Press": "マウスボタン",
+  mouse_move: "マウス移動",
+  mouse_scroll: "スクロール",
+  ENCODER_VOL_DOWN_UP: "エンコーダ: 音量",
+  ENCODER_MSC_DOWN_UP: "エンコーダ: スクロール (MSC)",
+  rsr_trans: "エンコーダ透過",
+
+  Bluetooth: "Bluetooth 操作",
+  "Output Selection": "出力先 (USB/BT) 切替",
+  "External Power": "外部電源",
+  Reset: "再起動",
+  Bootloader: "ブートローダーへ (焼き込みモード)",
+  "Studio Unlock": "Studio のロック解除",
+};
+
+export const BG_BASIC = "基本";
+export const BG_LAYER = "レイヤー";
+export const BG_HOLDTAP = "長押し (hold-tap)";
+export const BG_MACRO = "マクロ";
+export const BG_POINTER = "マウス・エンコーダ";
+export const BG_SYSTEM = "Bluetooth・システム";
+export const BG_OTHER = "その他";
+
+/** Group order in the behaviour picker; "その他" is appended only when the
+ *  device reports a behaviour this file has never heard of. */
+export const BEHAVIOR_GROUP_ORDER = [
+  BG_BASIC,
+  BG_LAYER,
+  BG_HOLDTAP,
+  BG_MACRO,
+  BG_POINTER,
+  BG_SYSTEM,
+] as const;
+
+/** display_name -> group. Key order inside the object is the order the picker
+ *  lists a group's rows in, so the common ones come first. */
+export const BEHAVIOR_GROUPS: Record<string, string> = {
+  "Key Press": BG_BASIC,
+  Transparent: BG_BASIC,
+  None: BG_BASIC,
+  "Key Toggle": BG_BASIC,
+  "Key Repeat": BG_BASIC,
+  "Caps Word": BG_BASIC,
+  "Grave/Escape": BG_BASIC,
+  "Sticky Key": BG_BASIC,
+
+  "Momentary Layer": BG_LAYER,
+  "To Layer": BG_LAYER,
+  "Toggle Layer": BG_LAYER,
+  "Sticky Layer": BG_LAYER,
+
+  "Mod-Tap": BG_HOLDTAP,
+  "Layer-Tap": BG_HOLDTAP,
+  LAYER_TAP_TO_0: BG_HOLDTAP,
+  LAYER_TAP_TO_APPLE: BG_HOLDTAP,
+  LAYER_TAP_TO_ANDROID: BG_HOLDTAP,
+
+  rt_macro: BG_MACRO,
+  TO_LAYER_0: BG_MACRO,
+  TO_APPLE_DEFAULT: BG_MACRO,
+  TO_ANDROID: BG_MACRO,
+  BT_H_FOLD: BG_MACRO,
+  BT_J_MAC: BG_MACRO,
+  BT_K_WIN: BG_MACRO,
+
+  "Mouse Key Press": BG_POINTER,
+  mouse_move: BG_POINTER,
+  mouse_scroll: BG_POINTER,
+  ENCODER_VOL_DOWN_UP: BG_POINTER,
+  ENCODER_MSC_DOWN_UP: BG_POINTER,
+  rsr_trans: BG_POINTER,
+
+  Bluetooth: BG_SYSTEM,
+  "Output Selection": BG_SYSTEM,
+  "External Power": BG_SYSTEM,
+  Reset: BG_SYSTEM,
+  Bootloader: BG_SYSTEM,
+  "Studio Unlock": BG_SYSTEM,
+};
+
+/** Japanese name, falling back to the raw display_name for a behaviour this
+ *  file does not know (another keyboard's devicetree). */
+export function behaviorJa(name: string): string {
+  return BEHAVIOR_JA[name] ?? name;
+}
+
+/** First sentence of BEHAVIOR_HELP: one line under a picker row. */
+export function behaviorSummary(name: string): string {
+  const help = BEHAVIOR_HELP[name];
+  if (!help) return "";
+  const i = help.indexOf("。");
+  return i === -1 ? help : help.slice(0, i + 1);
+}
+
+/** Split the device's behaviour list into the picker's sections, keeping
+ *  BEHAVIOR_GROUPS order inside each one. */
+export function groupBehaviors<T extends { display_name: string }>(
+  behaviors: T[],
+): { group: string; behaviors: T[] }[] {
+  const rank = Object.keys(BEHAVIOR_GROUPS);
+  const out = new Map<string, T[]>(BEHAVIOR_GROUP_ORDER.map((g) => [g, []]));
+  for (const b of behaviors) {
+    const g = BEHAVIOR_GROUPS[b.display_name] ?? BG_OTHER;
+    if (!out.has(g)) out.set(g, []);
+    out.get(g)!.push(b);
+  }
+  for (const list of out.values())
+    list.sort((a, b) => rank.indexOf(a.display_name) - rank.indexOf(b.display_name));
+  return [...out.entries()]
+    .filter(([, bs]) => bs.length)
+    .map(([group, bs]) => ({ group, behaviors: bs }));
+}
+
 // ---- binding parameters ---------------------------------------------------
 
 /** Keyed by the metadata `name` the device reports for a parameter slot. */
