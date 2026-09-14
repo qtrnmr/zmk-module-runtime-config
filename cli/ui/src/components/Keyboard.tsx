@@ -28,8 +28,9 @@ const G = 3;
 /** Behaviors whose name adds nothing over the label itself. */
 const PLAIN = new Set(["Key Press", "Transparent", "None"]);
 
-/** Short marker for the behaviour, sized to fit inside a 1u key cap. */
-const TAG: Record<string, string> = {
+/** Short marker for the behaviour, sized to fit inside a 1u key cap.
+ *  Exported so the legend explains every abbreviation the board can draw. */
+export const TAG: Record<string, string> = {
   "Momentary Layer": "MO",
   "Layer-Tap": "LT",
   "Mod-Tap": "MT",

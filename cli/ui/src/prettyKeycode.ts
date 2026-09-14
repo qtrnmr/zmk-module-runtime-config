@@ -8,7 +8,9 @@
  * `CMMA`, `SEMI`, `SPC`, `NUM_1`, `UARW`, `LANGUAGE_2` rather than the spellings used
  * in ZMK docs. Both are mapped.
  */
-const MAP: Record<string, string> = {
+/** Canonical keycode name -> what the cap shows. Exported so the legend can
+ *  list every symbol the board can draw without a second table. */
+export const PRETTY_MAP: Record<string, string> = {
   // modifiers
   LCTRL: "Ctrl", RCTRL: "Ctrl", LEFT_CONTROL: "Ctrl", RIGHT_CONTROL: "Ctrl",
   LSHIFT: "Shift", RSHIFT: "Shift", LSHFT: "Shift", RSHFT: "Shift",
@@ -45,7 +47,8 @@ const MAP: Record<string, string> = {
   LANG2: "英数", LANGUAGE_2: "英数",
 };
 
-const WRAP: Record<string, string> = {
+/** Modifier prefix -> its glyph, e.g. `LG(TAB)` -> `⌘⇥`. */
+export const MOD_WRAP: Record<string, string> = {
   LG: "⌘", RG: "⌘",
   LC: "^", RC: "^",
   LA: "⌥", RA: "⌥",
@@ -54,10 +57,10 @@ const WRAP: Record<string, string> = {
 
 export function pretty(text: string): string {
   const m = /^([LR][GCAS])\((.*)\)$/.exec(text);
-  if (m) return WRAP[m[1]] + pretty(m[2]);
+  if (m) return MOD_WRAP[m[1]] + pretty(m[2]);
   if (/^N[0-9]$/.test(text)) return text[1];
   if (/^NUM_[0-9]$/.test(text)) return text[4];
   if (/^KP_N[0-9]$/.test(text)) return "KP" + text[4];
   if (/^KP_NUMBER_[0-9]$/.test(text)) return "KP" + text[10];
-  return MAP[text] ?? text;
+  return PRETTY_MAP[text] ?? text;
 }
