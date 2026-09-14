@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { setKey } from "../api";
 import { holdtapSlotFor } from "../board";
 import { decorFor } from "../decor";
+import { describeBinding } from "../describe";
 import { BEHAVIOR_HELP } from "../help";
+import { reverseKeycodes } from "../macroFormat";
 import { Btn } from "../panels/ui";
 import { pretty } from "../prettyKeycode";
 import { layerLabel } from "../types";
@@ -45,6 +47,21 @@ export default function KeyInspector({
 
   const transparent = state.behaviors.find((b) => b.display_name === "Transparent");
 
+  const byId = useMemo(() => new Map(state.behaviors.map((b) => [b.id, b])), [state.behaviors]);
+  const rev = useMemo(() => reverseKeycodes(state.keycodes), [state.keycodes]);
+  /** One Japanese sentence for what this key does right now — the card's
+   *  headline is the cap's own text, which says nothing on its own. */
+  const said = current
+    ? describeBinding(current, {
+        byId,
+        layers: state.keymap.layers,
+        rev,
+        base: state.keymap.layers[0],
+        pos,
+        macros: features?.macros ?? null,
+      })
+    : "";
+
   const apply = (over?: BindingValue) => {
     const body = over ?? value;
     // Only the keymap changes, so the cached features document stays valid.
@@ -67,7 +84,8 @@ export default function KeyInspector({
               ? pretty(current.label.text)
               : `${pretty(current.label.hold)} / ${pretty(current.label.tap)}`)}
         </div>
-        <div className="flex items-center gap-1 text-xs text-zinc-500">
+        {said && <p className="mt-0.5 text-sm leading-snug text-zinc-300">{said}</p>}
+        <div className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
           {current?.label.behavior}
           <Info
             text={BEHAVIOR_HELP[current?.label.behavior ?? ""]}

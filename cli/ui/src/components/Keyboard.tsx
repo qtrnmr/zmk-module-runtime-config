@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from "react";
 import { bounds, toBoxes, UNIT } from "../geometry";
 import { encoderLayerBinding, labelText } from "../board";
 import type { Decor } from "../decor";
+import { describeBinding } from "../describe";
 import { BEHAVIOR_HELP, paramLines } from "../help";
 import { reverseKeycodes } from "../macroFormat";
 import { pretty } from "../prettyKeycode";
@@ -13,6 +14,7 @@ import type {
   Label,
   Layer,
   LayoutKey,
+  Macros,
   Selection,
 } from "../types";
 import { layerLabel } from "../types";
@@ -130,6 +132,7 @@ export default function Keyboard({
   behaviors,
   keycodes,
   layers,
+  macros,
 }: {
   layout: { name: string; keys: LayoutKey[] };
   layer: Layer;
@@ -148,6 +151,8 @@ export default function Keyboard({
   behaviors: Behavior[];
   keycodes: Record<string, number>;
   layers: Layer[];
+  /** Only so a rt_macro's tooltip can quote its own steps. */
+  macros: Macros | null;
 }) {
   const boxes = useMemo(() => toBoxes(layout.keys), [layout.keys]);
   const bb = useMemo(() => bounds(boxes), [boxes]);
@@ -160,10 +165,18 @@ export default function Keyboard({
     binding: { behavior_id: number; param1: number; param2: number },
     label: Label | undefined,
     head: ReactNode,
+    pos?: number,
   ) => {
     const b = byId.get(binding.behavior_id);
+    // The same sentence the inspector's card shows, so the board and the card
+    // never explain the same key two different ways.
+    const said = describeBinding(
+      { ...binding, label },
+      { byId, layers, rev, base, pos, macros },
+    );
     return (
       <>
+        {said && <TipHead>{said}</TipHead>}
         {head}
         <TipBehavior name={label?.behavior ?? b?.display_name} />
         {paramLines(b, binding, layers, rev).map((l) => (
@@ -194,11 +207,13 @@ export default function Keyboard({
           })
           .join(", ")
       : "全レイヤー";
+    const said = describeBinding(c.effective, { byId, layers, rev, base, macros });
     return (
       <>
         <TipHead>
           コンボ {c.index}: {keys} → {labelText(c.effective.label, "?")}
         </TipHead>
+        {said && <p className="text-zinc-100">{said}</p>}
         <TipBehavior name={c.effective.label?.behavior} />
         {paramLines(byId.get(c.effective.behavior_id), c.effective, layers, rev).map((l) => (
           <p key={l} className="text-zinc-300">
@@ -280,10 +295,10 @@ export default function Keyboard({
               : undefined;
           const content =
             sensor === undefined ? (
-              bindingTip(binding, label, head)
+              bindingTip(binding, label, head, b.pos)
             ) : (
               <>
-                {bindingTip(binding, label, head)}
+                {bindingTip(binding, label, head, b.pos)}
                 <div className="mt-1 border-t border-zinc-800 pt-1">
                   <TipHead>エンコーダ {sensor} (押し込み = このキー)</TipHead>
                   {lb ? (
