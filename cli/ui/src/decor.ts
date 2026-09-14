@@ -12,7 +12,7 @@ export const DECOR: Record<string, Decor> = {
   // right-thumb slot, right of Enter.
   "Default:43": {
     encoders: [{ sensor: 0, cx: 550, cy: 85, r: 45 }],
-    trackball: { cx: 925, cy: 387, r: 52 },
+    trackball: { cx: 938, cy: 392, r: 48 },
   },
 };
 
