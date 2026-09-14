@@ -9,6 +9,7 @@ import ConfirmDialog from "./components/ConfirmDialog";
 import Inspector from "./components/Inspector";
 import Keyboard from "./components/Keyboard";
 import LayerChips, { type RemovedLayer } from "./components/LayerChips";
+import LayerEntry from "./components/LayerEntry";
 import Rail from "./components/Rail";
 import Toast from "./components/Toast";
 import TopBar from "./components/TopBar";
@@ -18,6 +19,7 @@ import TrackballPanel from "./panels/TrackballPanel";
 import type { FeatureKey, Features, Layer, LayerGroup, Selection, State, Tab, UiMeta } from "./types";
 
 const SHOW_COMBOS_KEY = "zmkrt.showCombos";
+const ENTRY_HIDDEN_KEY = "zmkrt.layerEntryHidden";
 
 export default function App() {
   const [state, setState] = useState<State | null>(null);
@@ -36,12 +38,20 @@ export default function App() {
     () => localStorage.getItem(SHOW_COMBOS_KEY) !== "0",
   );
   const [hoverCombo, setHoverCombo] = useState<number | null>(null);
+  /** The "how do I get here" banner above the board, dismissible for good. */
+  const [entryHidden, setEntryHidden] = useState(
+    () => localStorage.getItem(ENTRY_HIDDEN_KEY) === "1",
+  );
   /** UI-only layer groups; null until /api/ui-meta answers. */
   const [meta, setMeta] = useState<UiMeta | null>(null);
 
   useEffect(() => {
     localStorage.setItem(SHOW_COMBOS_KEY, showCombos ? "1" : "0");
   }, [showCombos]);
+
+  useEffect(() => {
+    localStorage.setItem(ENTRY_HIDDEN_KEY, entryHidden ? "1" : "0");
+  }, [entryHidden]);
 
   /** Layers present at first load, so layers that disappear can be offered for restore. */
   const initialLayers = useRef<Layer[] | null>(null);
@@ -237,6 +247,8 @@ export default function App() {
                 groups={meta?.groups ?? []}
                 suggested={meta?.suggested}
                 onGroups={(g) => void saveGroups(g)}
+                entryHidden={entryHidden}
+                onShowEntry={() => setEntryHidden(false)}
               />
               {selection === null && (
                 <ComboList
@@ -253,30 +265,46 @@ export default function App() {
                 />
               )}
             </div>
-            <div className="relative min-h-0">
-              <Keyboard
-                layout={state.layout}
-                layer={layer}
-                base={state.keymap.layers[0]}
-                selection={selection}
-                onSelect={setSelection}
-                combos={
-                  features?.combos.available
-                    ? activeCombos(features.combos.entries, layer.index)
-                    : []
-                }
-                showCombos={showCombos}
-                behaviors={state.behaviors}
-                keycodes={state.keycodes}
-                layers={state.keymap.layers}
-                macros={features?.macros ?? null}
-                encoder={features?.encoder ?? null}
-                decor={decorFor(state.layout)}
-                activators={activators.get(layer.index) ?? []}
-                hoverCombo={hoverCombo}
-                onHoverCombo={setHoverCombo}
-                onTrackball={() => changeTab("trackball")}
-              />
+            <div className="flex min-h-0 flex-col">
+              {!entryHidden && (
+                <LayerEntry
+                  layer={layer}
+                  layers={state.keymap.layers}
+                  base={state.keymap.layers[0]}
+                  activators={activators.get(layer.index) ?? []}
+                  pending={!features}
+                  onGo={(index, pos) => {
+                    setLayerIdx(index);
+                    setSelection({ kind: "key", pos });
+                  }}
+                  onHide={() => setEntryHidden(true)}
+                />
+              )}
+              <div className="relative min-h-0 flex-1">
+                <Keyboard
+                  layout={state.layout}
+                  layer={layer}
+                  base={state.keymap.layers[0]}
+                  selection={selection}
+                  onSelect={setSelection}
+                  combos={
+                    features?.combos.available
+                      ? activeCombos(features.combos.entries, layer.index)
+                      : []
+                  }
+                  showCombos={showCombos}
+                  behaviors={state.behaviors}
+                  keycodes={state.keycodes}
+                  layers={state.keymap.layers}
+                  macros={features?.macros ?? null}
+                  encoder={features?.encoder ?? null}
+                  decor={decorFor(state.layout)}
+                  activators={activators.get(layer.index) ?? []}
+                  hoverCombo={hoverCombo}
+                  onHoverCombo={setHoverCombo}
+                  onTrackball={() => changeTab("trackball")}
+                />
+              </div>
             </div>
           </div>
         ) : (

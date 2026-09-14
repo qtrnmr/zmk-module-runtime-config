@@ -92,6 +92,8 @@ export default function LayerChips({
   groups,
   suggested,
   onGroups,
+  entryHidden,
+  onShowEntry,
 }: {
   layers: Layer[];
   current: number;
@@ -112,6 +114,10 @@ export default function LayerChips({
   suggested?: LayerGroup[];
   /** Save the whole group document (the server answers with what it stored). */
   onGroups(next: LayerGroup[]): void;
+  /** The "how do I get here" banner above the board has been dismissed, so
+   *  the card carries the only way back to it. */
+  entryHidden?: boolean;
+  onShowEntry?(): void;
 }) {
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
@@ -407,6 +413,15 @@ export default function LayerChips({
           +
         </button>
       </header>
+
+      {!collapsed && entryHidden && onShowEntry && (
+        <button
+          onClick={onShowEntry}
+          className="border-b border-zinc-800 px-3 py-1 text-left text-[10px] text-violet-300 hover:bg-violet-500/10"
+        >
+          ＋ 入り方を表示
+        </button>
+      )}
 
       {!collapsed && !!suggested?.length && !dismissed && !groups.length && (
         <div className="border-b border-zinc-800 bg-sky-500/10 px-2 py-1.5 text-[11px]">
