@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { bounds, toBoxes, UNIT } from "../geometry";
-import { comboColor, encoderLayerBinding, labelText } from "../board";
+import { encoderLayerBinding, labelText } from "../board";
 import type { Decor } from "../decor";
 import { BEHAVIOR_HELP, paramLines } from "../help";
 import { reverseKeycodes } from "../macroFormat";
@@ -225,8 +225,8 @@ export default function Keyboard({
     if (idx === null) return new Set<number>();
     return new Set(combos.find((c) => c.index === idx)?.key_positions ?? []);
   }, [combos, hoverCombo, selCombo]);
-  /** Colour of the combo whose keys are lit, so caps match their ribbon. */
-  const litColor = comboColor(hoverCombo ?? selCombo ?? 0);
+  /** Caps of the hovered/selected combo take the same accent as its bridges. */
+  const litColor = "#38bdf8";
 
   if (!boxes.length) return <div className="p-8 text-zinc-500">レイアウト情報がありません。</div>;
 
