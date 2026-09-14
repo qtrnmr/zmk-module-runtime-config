@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { BEHAVIOR_HELP, PARAM_HELP } from "../help";
-import { curatedOrder, defaultParam, paramKind } from "../params";
+import { defaultParam, paramKind } from "../params";
 import type { Behavior, LayerGroup, ParamDesc, State } from "../types";
-import { DT_DEFAULT_ID } from "../types";
+import BehaviorPicker from "./BehaviorPicker";
 import { LayerOptions } from "./LayerChoice";
 import KeycodePicker from "./KeycodePicker";
 import { Info } from "./Tooltip";
@@ -107,7 +107,6 @@ export default function BindingForm({
   groups: LayerGroup[];
 }) {
   const byId = useMemo(() => new Map(state.behaviors.map((b) => [b.id, b])), [state.behaviors]);
-  const ordered = useMemo(() => curatedOrder(state.behaviors), [state.behaviors]);
 
   const behavior = byId.get(value.behavior_id);
   const meta = metaOf(behavior);
@@ -123,32 +122,20 @@ export default function BindingForm({
 
   return (
     <div className="min-w-0 space-y-3">
-      <label className="block space-y-1">
+      <div className="space-y-1">
         <span className="flex items-center gap-1 text-xs font-medium text-zinc-400">
           ビヘイビア
           {behavior && (
             <Info text={BEHAVIOR_HELP[behavior.display_name]} label={behavior.display_name} />
           )}
         </span>
-        <select
+        <BehaviorPicker
+          behaviors={state.behaviors}
           value={value.behavior_id}
+          onPick={pickBehavior}
           disabled={disabled}
-          onChange={(e) => pickBehavior(Number(e.target.value))}
-          className="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm disabled:opacity-50"
-        >
-          {/* The firmware reports id 0 for a binding it has never overridden; it
-              is not selectable, but it has to be showable or the select would
-              silently jump to the first behaviour in the list. */}
-          {value.behavior_id === DT_DEFAULT_ID && (
-            <option value={DT_DEFAULT_ID}>(devicetree の既定のまま)</option>
-          )}
-          {ordered.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.display_name}
-            </option>
-          ))}
-        </select>
-      </label>
+        />
+      </div>
 
       {paramKind(meta.param1) !== "none" && (
         <div className="space-y-1">
