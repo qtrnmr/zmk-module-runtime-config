@@ -68,3 +68,39 @@ export function encoderLayerBinding(
     .find((b) => b.sensor === sensor)
     ?.layers.find((l) => l.layer === layerIndex);
 }
+
+/** One colour per combo so overlapping chords stay apart; cycles past six. */
+export const COMBO_COLORS = ["#fbbf24", "#38bdf8", "#34d399", "#a78bfa", "#fb7185", "#f97316"];
+
+export function comboColor(index: number): string {
+  return COMBO_COLORS[((index % COMBO_COLORS.length) + COMBO_COLORS.length) % COMBO_COLORS.length];
+}
+
+/** SVG path for a combo ribbon: two keys get one gentle arc (bowed `bow` px
+ *  off the straight line so it does not run through the caps' centres);
+ *  three or more get a Catmull-Rom spline through every key centre. */
+export function ribbonPath(points: [number, number][], bow = 14): string {
+  if (points.length < 2) return "";
+  if (points.length === 2) {
+    const [[x1, y1], [x2, y2]] = points;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const mx = (x1 + x2) / 2 + (-dy / len) * bow;
+    const my = (y1 + y2) / 2 + (dx / len) * bow;
+    return `M${x1},${y1} Q${mx},${my} ${x2},${y2}`;
+  }
+  let d = `M${points[0][0]},${points[0][1]}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] ?? points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] ?? p2;
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ` C${c1x},${c1y} ${c2x},${c2y} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toBoxes, UNIT } from "./geometry";
-import { activeCombos, comboPath, holdtapSlotFor, keyCenter } from "./board";
+import { activeCombos, COMBO_COLORS, comboColor, comboPath, holdtapSlotFor, keyCenter, ribbonPath } from "./board";
 import type { ComboEntry, HoldtapSlot } from "./types";
 
 const boxes = toBoxes([
@@ -52,5 +52,29 @@ describe("holdtapSlotFor", () => {
   });
   it("never matches the unknown id 0", () => {
     expect(holdtapSlotFor(slots, 0)).toBeUndefined();
+  });
+});
+
+describe("ribbonPath", () => {
+  it("arcs two keys with the control point off the straight line", () => {
+    // left -> right: the perpendicular (-dy, dx) points +y, so the bow is below
+    expect(ribbonPath([[0, 0], [100, 0]], 10)).toBe("M0,0 Q50,10 100,0");
+  });
+  it("splines three or more keys with one cubic per segment", () => {
+    const d = ribbonPath([[0, 0], [50, 20], [100, 0]]);
+    expect(d.startsWith("M0,0 C")).toBe(true);
+    expect(d.split(" C")).toHaveLength(3);
+    expect(d.endsWith(" 100,0")).toBe(true);
+  });
+  it("is empty for fewer than two points", () => {
+    expect(ribbonPath([[1, 1]])).toBe("");
+  });
+});
+
+describe("comboColor", () => {
+  it("cycles through the palette", () => {
+    expect(comboColor(0)).toBe(COMBO_COLORS[0]);
+    expect(comboColor(COMBO_COLORS.length)).toBe(COMBO_COLORS[0]);
+    expect(comboColor(1)).not.toBe(comboColor(2));
   });
 });
