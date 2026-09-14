@@ -15,14 +15,63 @@ export interface FullKey {
   /** Canonical keycode name; "" for a gap in the row. */
   code: string;
   w?: number;
+  /** What the ⇧ toggle turns this cap into, when Shift changes the character. */
+  shifted?: ShiftedKey;
 }
+
+export interface ShiftedKey {
+  label: string;
+  code: string;
+}
+
+/**
+ * Base keycode -> the dedicated keycode for the character Shift prints.
+ *
+ * These are not "the key plus a Shift toggle": ZMK ships one keycode per
+ * shifted symbol and bakes the LS bit into its value (`PLUS` is literally
+ * `0x0207002E`, i.e. `EQL` with `0x02 << 24` set), which is what makes `+`
+ * pickable at all. Letters are left out on purpose — upper case is the LS
+ * toggle's job, not a separate keycode.
+ *
+ * Spellings are the SHORTEST alias again, so `ATSN` not `AT`, `CRRT` not
+ * `CARET`, `ASTRK` not `STAR`, `COLN` not `COLON`, `LABT` not `LT`, `TILD`
+ * not `TILDE`; fullKeyboard.test.ts checks each one against the enum dump.
+ */
+export const SHIFTED: Record<string, ShiftedKey> = {
+  GRAV: { label: "~", code: "TILD" },
+  NUM_1: { label: "!", code: "EXCL" },
+  NUM_2: { label: "@", code: "ATSN" },
+  NUM_3: { label: "#", code: "HASH" },
+  NUM_4: { label: "$", code: "DLLR" },
+  NUM_5: { label: "%", code: "PRCNT" },
+  NUM_6: { label: "^", code: "CRRT" },
+  NUM_7: { label: "&", code: "AMPS" },
+  NUM_8: { label: "*", code: "ASTRK" },
+  NUM_9: { label: "(", code: "LPAR" },
+  NUM_0: { label: ")", code: "RPAR" },
+  MINUS: { label: "_", code: "UNDER" },
+  EQL: { label: "+", code: "PLUS" },
+  LBKT: { label: "{", code: "LBRC" },
+  RBKT: { label: "}", code: "RBRC" },
+  BSLH: { label: "|", code: "PIPE" },
+  SEMI: { label: ":", code: "COLN" },
+  APOSTROPHE: { label: '"', code: "DQT" },
+  CMMA: { label: "<", code: "LABT" },
+  DOT: { label: ">", code: "GT" },
+  FSLH: { label: "?", code: "QMARK" },
+};
 
 export interface FullSection {
   name: string;
   rows: FullKey[][];
 }
 
-const k = (label: string, code: string, w?: number): FullKey => ({ label, code, w });
+const k = (label: string, code: string, w?: number): FullKey => ({
+  label,
+  code,
+  w,
+  shifted: SHIFTED[code],
+});
 /** A gap inside a row, e.g. between Esc and F1. */
 const gap = (w: number): FullKey => ({ label: "", code: "", w });
 
@@ -171,6 +220,10 @@ export const FULL_KEYBOARD: FullSection[] = [
   { name: "メディア", rows: MEDIA },
   { name: "日本語・その他", rows: JIS },
 ];
+
+/** The two caps the ⇧ toggle hangs off: clicking either flips the whole board
+ *  instead of committing a keycode. */
+export const SHIFT_CODES = ["LSHIFT", "RSHIFT"];
 
 /** Every key on the table, spacers dropped. */
 export const FULL_KEYBOARD_KEYS: FullKey[] = FULL_KEYBOARD.flatMap((s) =>
