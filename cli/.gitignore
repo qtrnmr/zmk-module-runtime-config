@@ -8,3 +8,5 @@ build/
 .zmkrt-backup.jsonl
 # keymap snapshots (record-only runtime artifacts)
 keymap-snapshot-*.bin
+# UI-only layer groups — runtime artifact, like the backup log
+.zmkrt-ui.json

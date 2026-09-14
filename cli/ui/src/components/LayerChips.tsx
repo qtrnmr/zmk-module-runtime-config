@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { groupLayers, moveLayer, nextColor } from "../groups";
 import type { GroupColor, Layer, LayerGroup } from "../types";
 import { GROUP_COLORS, PICKABLE_COLORS, layerLabel } from "../types";
@@ -26,8 +27,10 @@ const readCollapsed = (): Set<string> => {
   }
 };
 
-/** A popup menu anchored to the button that opened it. The card clips its own
- *  overflow, so the menu is positioned in the viewport rather than in the row. */
+/** A popup menu anchored to the button that opened it. It goes through a portal
+ *  to <body>: the card clips its own overflow, and its `backdrop-blur` makes it
+ *  the containing block for `fixed` children, so a menu rendered in place would
+ *  be both cut off and positioned against the card instead of the viewport. */
 type MenuAnchor = { kind: "layer"; layer: Layer } | { kind: "group"; group: LayerGroup };
 type Menu = MenuAnchor & { x: number; y: number };
 
@@ -41,7 +44,7 @@ function MenuSheet({ menu, onClose, children }: {
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} onContextMenu={onClose} />
       <div
@@ -50,7 +53,8 @@ function MenuSheet({ menu, onClose, children }: {
       >
         {children}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
@@ -162,7 +166,6 @@ export default function LayerChips({
 
   const canAdd = availableLayers > 0 && !disabled;
   const sections = groupLayers(layers, groups);
-  const showHeaders = !collapsed && groups.length > 0;
   const colorByLayer = new Map<number, GroupColor>();
   for (const s of sections)
     for (const l of s.layers) colorByLayer.set(l.id, s.group?.color ?? "zinc");
@@ -338,6 +341,22 @@ export default function LayerChips({
     );
   };
 
+  /** Sectioned when there are groups to show; the plain 0..n ladder otherwise
+   *  and while collapsed, where only the badge colours carry the grouping — a
+   *  layer stays where its number says it is. */
+  const rows =
+    collapsed || !groups.length
+      ? layers.map(layerRow)
+      : sections.flatMap((s) => {
+          if (!s.group && !s.layers.length) return [];
+          const key = s.group?.id ?? NONE;
+          const hasCurrent = s.layers.some((l) => l.index === current);
+          return [
+            header(s.group, s.layers.length, hasCurrent),
+            ...(shut.has(key) ? [] : s.layers.map(layerRow)),
+          ];
+        });
+
   const createGroup = (name: string) => {
     setCreating(false);
     const n = name.trim();
@@ -390,45 +409,38 @@ export default function LayerChips({
       </header>
 
       {!collapsed && !!suggested?.length && !dismissed && !groups.length && (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-zinc-800 bg-sky-500/10 px-2 py-1.5 text-[11px] text-zinc-300">
-          <span className="text-zinc-400">グループの提案:</span>
-          <span className="min-w-0 truncate text-zinc-200">
-            {suggested.map((g) => g.name).join(" / ")}
-          </span>
-          <button
-            onClick={() => onGroups(suggested)}
-            disabled={disabled}
-            className="ml-auto rounded border border-sky-600/60 px-1.5 py-0.5 text-sky-200 hover:bg-sky-600/20 disabled:opacity-40"
-          >
-            適用
-          </button>
-          <button
-            onClick={() => {
-              localStorage.setItem(SUGGEST_KEY, "1");
-              setDismissed(true);
-            }}
-            className="rounded px-1 text-zinc-500 hover:text-zinc-200"
-          >
-            閉じる
-          </button>
+        <div className="border-b border-zinc-800 bg-sky-500/10 px-2 py-1.5 text-[11px]">
+          <div className="flex items-baseline gap-1.5">
+            <span className="shrink-0 text-zinc-400">グループの提案</span>
+            <span className="min-w-0 truncate text-zinc-200">
+              {suggested.map((g) => g.name).join(" / ")}
+            </span>
+          </div>
+          <div className="mt-1 flex items-center gap-1.5">
+            <button
+              onClick={() => onGroups(suggested)}
+              disabled={disabled}
+              className="flex-1 rounded border border-sky-600/60 py-0.5 text-sky-200 hover:bg-sky-600/20 disabled:opacity-40"
+            >
+              適用
+            </button>
+            <button
+              onClick={() => {
+                localStorage.setItem(SUGGEST_KEY, "1");
+                setDismissed(true);
+              }}
+              className="rounded px-1.5 py-0.5 text-zinc-500 hover:text-zinc-200"
+            >
+              閉じる
+            </button>
+          </div>
         </div>
       )}
 
       <ul
         className={"min-h-0 flex-1 space-y-0.5 overflow-y-auto " + (collapsed ? "p-1" : "p-1.5")}
       >
-        {sections.flatMap((s) => {
-          const key = s.group?.id ?? NONE;
-          // With no groups at all the single ungrouped section is the old flat
-          // list: no header, nothing to collapse.
-          if (!showHeaders) return s.layers.map(layerRow);
-          if (!s.group && !s.layers.length) return [];
-          const hasCurrent = s.layers.some((l) => l.index === current);
-          return [
-            header(s.group, s.layers.length, hasCurrent),
-            ...(shut.has(key) ? [] : s.layers.map(layerRow)),
-          ];
-        })}
+        {rows}
 
         {creating && !collapsed && (
           <li>
