@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getFeatures, getState, layerOp, resetDevice, snapshot } from "./api";
+import { getFeatures, getState, getUiMeta, layerOp, putUiMeta, resetDevice, snapshot } from "./api";
 import { activeCombos } from "./board";
 import { decorFor } from "./decor";
 import ChangeLog from "./components/ChangeLog";
@@ -14,7 +14,7 @@ import TopBar from "./components/TopBar";
 import CondlayerPanel from "./panels/CondlayerPanel";
 import MacroPanel from "./panels/MacroPanel";
 import TrackballPanel from "./panels/TrackballPanel";
-import type { FeatureKey, Features, Layer, Selection, State, Tab } from "./types";
+import type { FeatureKey, Features, Layer, LayerGroup, Selection, State, Tab, UiMeta } from "./types";
 
 const SHOW_COMBOS_KEY = "zmkrt.showCombos";
 
@@ -35,6 +35,8 @@ export default function App() {
     () => localStorage.getItem(SHOW_COMBOS_KEY) !== "0",
   );
   const [hoverCombo, setHoverCombo] = useState<number | null>(null);
+  /** UI-only layer groups; null until /api/ui-meta answers. */
+  const [meta, setMeta] = useState<UiMeta | null>(null);
 
   useEffect(() => {
     localStorage.setItem(SHOW_COMBOS_KEY, showCombos ? "1" : "0");
@@ -63,9 +65,29 @@ export default function App() {
     }
   }, []);
 
+  /** Groups live in .zmkrt-ui.json, not on the device, so they are fetched on
+   *  their own — and refetched after a layer op, which is the only thing that
+   *  can change which layer ids exist. */
+  const refetchMeta = useCallback(async () => {
+    try {
+      setMeta(await getUiMeta());
+    } catch {
+      setMeta({ version: 1, groups: [] });
+    }
+  }, []);
+
   useEffect(() => {
     void refetch();
-  }, [refetch]);
+    void refetchMeta();
+  }, [refetch, refetchMeta]);
+
+  const saveGroups = useCallback(async (groups: LayerGroup[]) => {
+    try {
+      setMeta(await putUiMeta({ groups }));
+    } catch (e) {
+      setToast(String(e));
+    }
+  }, []);
 
   const removed: RemovedLayer[] = useMemo(() => {
     if (!state || !initialLayers.current) return [];
@@ -100,6 +122,15 @@ export default function App() {
       }
     },
     [locked, refetch],
+  );
+
+  /** A layer op can add or remove layer ids, so the groups are reread after it. */
+  const runLayer = useCallback(
+    async (fn: () => Promise<{ ok: boolean; error?: string }>, okMsg: string) => {
+      await run(fn, okMsg);
+      await refetchMeta();
+    },
+    [run, refetchMeta],
   );
 
   const changeTab = useCallback((t: Tab) => {
@@ -177,15 +208,21 @@ export default function App() {
                   void run(() => layerOp("rename", { layer_id: id, name }), "名前を変更しました")
                 }
                 onMove={(start, dest) =>
-                  void run(() => layerOp("move", { start, dest }), "並び替えました")
+                  void runLayer(() => layerOp("move", { start, dest }), "並び替えました")
                 }
-                onAdd={() => void run(() => layerOp("add", {}), "レイヤーを追加しました")}
+                onAdd={() => void runLayer(() => layerOp("add", {}), "レイヤーを追加しました")}
                 onRemove={(index) =>
-                  void run(() => layerOp("remove", { index }), "レイヤーを削除しました")
+                  void runLayer(() => layerOp("remove", { index }), "レイヤーを削除しました")
                 }
                 onRestore={(id, at) =>
-                  void run(() => layerOp("restore", { layer_id: id, at_index: at }), "復元しました")
+                  void runLayer(
+                    () => layerOp("restore", { layer_id: id, at_index: at }),
+                    "復元しました",
+                  )
                 }
+                groups={meta?.groups ?? []}
+                suggested={meta?.suggested}
+                onGroups={(g) => void saveGroups(g)}
               />
               {selection === null && (
                 <ComboList
