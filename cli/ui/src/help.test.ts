@@ -107,7 +107,7 @@ describe("groupBehaviors", () => {
 
 describe("behaviorSummary", () => {
   it("keeps only the first sentence, and says nothing for an unknown name", () => {
-    expect(behaviorSummary("Key Press")).toBe("HID のキーコードを 1 つ送る (&kp)。");
+    expect(behaviorSummary("Key Press")).toBe("押している間そのキーが押された状態になる、いちばん普通のキー (&kp)。");
     expect(behaviorSummary("zzz_custom")).toBe("");
   });
 });

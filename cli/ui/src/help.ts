@@ -22,7 +22,7 @@ import { layerLabel } from "./types";
 /** Keyed by the `display_name` the device reports in /api/state. */
 export const BEHAVIOR_HELP: Record<string, string> = {
   // --- ZMK core ---
-  "Key Press": "HID のキーコードを 1 つ送る (&kp)。キーを離すとキーコードも離される。",
+  "Key Press": "押している間そのキーが押された状態になる、いちばん普通のキー (&kp)。離すと戻る。",
   Transparent: "このレイヤーでは何もせず、下のレイヤーの割り当てをそのまま使う (&trans)。",
   None: "何も起こさない (&none)。下のレイヤーにも渡さないので、キーを無効化できる。",
   "Momentary Layer": "押している間だけ指定レイヤーを有効にし、離すと戻る (&mo)。",
@@ -37,14 +37,14 @@ export const BEHAVIOR_HELP: Record<string, string> = {
   "Sticky Layer": "次にキーを 1 つ押すまでレイヤーを保持する (&sl)。レイヤー版の sticky key。",
   "Caps Word":
     "Caps Lock に似ているが、継続リスト外のキー (既定では英数字・_・BS・Del 以外) を押すか、もう一度押すと自動で解除される (&caps_word)。修飾は A〜Z にだけ掛かる。",
-  "Key Repeat": "直前に送ったキーコードをもう一度送る (&key_repeat)。既定では Key usage page のみ追跡する。",
+  "Key Repeat": "直前に押したキーをもう一度押す (&key_repeat)。音量などのメディアキーは対象外。",
   "Key Toggle":
     "キーの押下をトグルする (&kt)。押されていなければ押しっぱなしにし、押されていれば離す。Shift ロックや Alt-Tab に使う。",
   "Grave/Escape":
     "単独で叩くと Esc、Shift か Gui を押しながらだと ` (GRAVE) を送る mod-morph (&gresc)。",
   Bluetooth:
     "Bluetooth の操作 (&bt)。プロファイルの選択・次/前への移動・切断・プロファイルのクリアができる。",
-  "Output Selection": "HID の出力先を USB と BLE で切り替える (&out)。",
+  "Output Selection": "キー入力の送り先を USB と Bluetooth で切り替える (&out)。",
   "External Power": "外部電源レール (VCC) の ON / OFF / トグル (&ext_power)。",
   Reset: "キーボードを再起動する (&sys_reset)。保存済みの設定は消えない。",
   Bootloader:
@@ -230,7 +230,7 @@ export function groupBehaviors<T extends { display_name: string }>(
 
 /** Keyed by the metadata `name` the device reports for a parameter slot. */
 export const PARAM_HELP: Record<string, string> = {
-  Key: "送る HID キーコード。修飾トグルを足すと LC(LS(Z)) のように同時押しになる。",
+  Key: "押されたことにするキー。修飾トグルを足すと LC(LS(Z)) のように Ctrl+Shift+Z の同時押しになる。",
   Layer: "対象のレイヤー番号。名前はレイヤーカードで付け替えられる。",
   Slot: "ランタイムマクロのスロット番号。中身は「マクロ」ページで編集する。",
   Profile: "Bluetooth のプロファイル番号 (0 起点)。1 台の接続先が 1 プロファイルを占める。",
@@ -284,8 +284,8 @@ export const KEYCODE_HELP: Record<string, string> = {
   LANG2: "英数。JIS キーボードの「英数」キー。macOS では IME を英数入力に切り替える。",
   LANGUAGE_2: "英数。JIS キーボードの「英数」キー。macOS では IME を英数入力に切り替える。",
 
-  K_MUTE: "ミュート (キーボード usage page)。",
-  C_MUTE: "ミュート (consumer usage page)。",
+  K_MUTE: "ミュート (音を消す / 戻す)。キーボード扱いの Mute で、ほぼ全 OS で効く。",
+  C_MUTE: "ミュート (音を消す / 戻す)。メディアキー扱いの Mute で、K_MUTE が効かない環境向け。",
   C_VOL_UP: "音量を上げる。",
   C_VOLUME_UP: "音量を上げる。",
   C_VOL_DN: "音量を下げる。",

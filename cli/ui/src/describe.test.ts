@@ -71,7 +71,7 @@ const say = (behavior_id: number, param1 = 0, param2 = 0, label?: { behavior: st
 describe("describeBinding", () => {
   it("says what a key press sends, and what an obscure keycode means", () => {
     expect(say(1, KEYCODES.A)).toBe("キー入力: A");
-    expect(say(1, KEYCODES.K_MUTE)).toBe("キー入力: Mute · ミュート (キーボード usage page)");
+    expect(say(1, KEYCODES.K_MUTE)).toBe("キー入力: Mute · ミュート (音を消す / 戻す)。キーボード扱いの Mute で、ほぼ全 OS で効く");
     // A bare symbol keeps its canonical name beside it.
     expect(say(1, KEYCODES.SPC)).toBe("キー入力: ␣ (SPC)");
   });
