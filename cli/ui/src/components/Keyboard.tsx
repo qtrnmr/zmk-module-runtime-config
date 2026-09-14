@@ -301,15 +301,6 @@ export default function Keyboard({
                 }
                 strokeWidth={isSel ? 3 : isLit ? 2 : 1}
               />
-              {/* 1px inner top highlight, so the cap reads as a physical key */}
-              <rect
-                x={b.x + G + 3}
-                y={b.y + G + 2}
-                width={b.w - 2 * G - 6}
-                height={2}
-                rx={1}
-                className="fill-zinc-700/70"
-              />
               <g transform={`translate(${b.x + b.w / 2} ${b.y + b.h / 2})`}>
                 {ghost ? <KeyLabel label={ghost} dim /> : <KeyLabel label={label} />}
               </g>
