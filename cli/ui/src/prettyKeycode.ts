@@ -26,6 +26,18 @@ export const PRETTY_MAP: Record<string, string> = {
   MINUS: "-", EQL: "=", EQUAL: "=",
   LBKT: "[", RBKT: "]", LBRC: "{", RBRC: "}", LPAR: "(", RPAR: ")",
   GRAV: "`", GRAVE: "`",
+  // The shifted twins are keycodes in their own right (PLUS carries the LS bit
+  // in its value), so a cap bound to one has to draw the character it sends
+  // rather than the name nobody reads as a symbol.
+  EXCL: "!", ATSN: "@", AT: "@", HASH: "#", DLLR: "$", PRCNT: "%",
+  CRRT: "^", CARET: "^", AMPS: "&", ASTRK: "*", STAR: "*",
+  UNDER: "_", PLUS: "+",
+  PIPE: "|", PIPE2: "|",
+  COLN: ":", COLON: ":",
+  DQT: '"', DOUBLE_QUOTES: '"',
+  LABT: "<", LT: "<", GT: ">",
+  QMARK: "?", QUESTION: "?",
+  TILD: "~", TILDE: "~", TILDE2: "~",
   // editing / whitespace
   BSPC: "⌫", BACKSPACE: "⌫",
   DEL: "Del", DELETE: "Del",

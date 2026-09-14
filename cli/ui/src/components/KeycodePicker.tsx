@@ -36,7 +36,9 @@ export const SYMBOL_NAMES: Record<string, string[]> = (() => {
     // like "Ctrl" and "かな", which the ordinary name/description search
     // already covers.
     if ([...sym].length !== 1 || /[0-9A-Za-z]/.test(sym)) return;
-    (out[sym] ??= []).push(name);
+    const names = (out[sym] ??= []);
+    // PRETTY_MAP and SHIFTED overlap now that both know `+` is PLUS.
+    if (!names.includes(name)) names.push(name);
   };
   for (const [name, sym] of Object.entries(PRETTY_MAP)) add(sym, name);
   for (const { label, code } of Object.values(SHIFTED)) add(label, code);
@@ -70,7 +72,10 @@ export function searchKeycodes(names: string[], q: string, max = MAX_ROWS): stri
       // KPLS above PLUS for `+`.
       return [n, sym >= 0 ? -1 : rankOf(n, needle), sym] as const;
     })
-    .filter(([, r]) => r < 3)
+    // Typing a symbol asks for the keys that PRODUCE it, so drop the keys whose
+    // description merely mentions it — every "Shift+1 を 1 キーで送る" note
+    // contains a `+`, and they would bury KPLS.
+    .filter(([, r]) => r < (bySymbol.length ? 2 : 3))
     .sort(
       (a, b) =>
         a[1] - b[1] || a[2] - b[2] || a[0].length - b[0].length || a[0].localeCompare(b[0]),
@@ -120,11 +125,20 @@ export default function KeycodePicker({
     listRef.current?.children[active]?.scrollIntoView({ block: "nearest" });
   }, [open, active]);
 
-  const baseName = useMemo(
-    () => names.find((n) => keycodes[n] === base) ?? `0x${base.toString(16).toUpperCase()}`,
-    [names, keycodes, base],
-  );
-  const canonical = mods.reduceRight((t, m) => `${m}(${t})`, baseName);
+  /** The server's reverse map: shortest name for a value, ties alphabetical. */
+  const nameFor = (v: number) =>
+    names.filter((n) => keycodes[n] === v).sort((a, b) => a.length - b.length || (a < b ? -1 : 1))[0];
+
+  const canonical = useMemo(() => {
+    // A shifted symbol has a name of its own for the whole value, modifier bit
+    // included — and that is the name the board will show for this binding, so
+    // say `PLUS` rather than spelling it out as `LS(EQL)`.
+    const whole = nameFor(value);
+    if (whole) return whole;
+    const baseName = nameFor(base) ?? `0x${base.toString(16).toUpperCase()}`;
+    return mods.reduceRight((t, m) => `${m}(${t})`, baseName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [names, keycodes, value, base, mods]);
 
   const toggle = (m: ModName) => {
     const next = mods.includes(m) ? mods.filter((x) => x !== m) : [...mods, m];
@@ -271,7 +285,7 @@ export default function KeycodePicker({
 
       {board && (
         <FullKeyboardPicker
-          value={base}
+          value={value}
           keycodes={keycodes}
           onPick={(code) => {
             pick(code);

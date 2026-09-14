@@ -50,6 +50,13 @@ describe("searchKeycodes", () => {
     expect(searchKeycodes(KEYCODE_NAMES, "(").slice(0, 2)).toEqual(["LPAR", "KP_LPAR"]);
   });
 
+  it("keeps a symbol search to the keys that print it", () => {
+    // Every shifted symbol's note says "Shift+N", so a description match on `+`
+    // would drag in half the punctuation.
+    expect(searchKeycodes(KEYCODE_NAMES, "+")).toEqual(["PLUS", "KPLS"]);
+    expect(searchKeycodes(KEYCODE_NAMES, "?")).toEqual(["QMARK"]);
+  });
+
   it("does not treat a letter as a symbol", () => {
     // `a` is an ordinary prefix search; the symbol table must not shadow it.
     expect(searchKeycodes(KEYCODE_NAMES, "a")[0]).toBe("A");
