@@ -190,3 +190,61 @@ export const DT_DEFAULT_ID = 0;
 export function layerLabel(layer: Layer): string {
   return layer.name || `L${layer.index}`;
 }
+
+// ---- layer groups (/api/ui-meta) ------------------------------------------
+// A UI-only concept: twelve layers read as twelve names, so the user sorts them
+// into "Apple" / "Windows" / "Android". The firmware knows nothing about it.
+
+export type GroupColor = "zinc" | "sky" | "emerald" | "amber" | "violet" | "rose" | "orange";
+
+/** Every class is spelled out, because Tailwind only ships the ones it can
+ *  see in the source — a `bg-${color}-500` would build to nothing. */
+export const GROUP_COLORS: Record<GroupColor, { badge: string; text: string; bar: string }> = {
+  zinc: { badge: "bg-zinc-950/70 text-zinc-400", text: "text-zinc-400", bar: "bg-zinc-600" },
+  sky: { badge: "bg-sky-500/25 text-sky-200", text: "text-sky-300", bar: "bg-sky-500" },
+  emerald: {
+    badge: "bg-emerald-500/25 text-emerald-200",
+    text: "text-emerald-300",
+    bar: "bg-emerald-500",
+  },
+  amber: { badge: "bg-amber-500/25 text-amber-200", text: "text-amber-300", bar: "bg-amber-500" },
+  violet: {
+    badge: "bg-violet-500/25 text-violet-200",
+    text: "text-violet-300",
+    bar: "bg-violet-500",
+  },
+  rose: { badge: "bg-rose-500/25 text-rose-200", text: "text-rose-300", bar: "bg-rose-500" },
+  orange: {
+    badge: "bg-orange-500/25 text-orange-200",
+    text: "text-orange-300",
+    bar: "bg-orange-500",
+  },
+};
+
+/** The palette a new group draws from; "zinc" is reserved for 未所属 (共通). */
+export const PICKABLE_COLORS: GroupColor[] = [
+  "sky",
+  "emerald",
+  "amber",
+  "violet",
+  "rose",
+  "orange",
+];
+
+export interface LayerGroup {
+  /** Slug generated server-side from `name`; stable while the name is. */
+  id: string;
+  name: string;
+  color: GroupColor;
+  /** Studio layer **ids**, not indices: reordering the keymap must not move a
+   *  layer between groups. Ids of removed layers are kept and simply ignored. */
+  layers: number[];
+}
+
+export interface UiMeta {
+  version: number;
+  groups: LayerGroup[];
+  /** Only on a GET before anything has been saved: a grouping read off the
+   *  layer names, which the card offers as a one-click starting point. */
+  suggested?: LayerGroup[];
+}

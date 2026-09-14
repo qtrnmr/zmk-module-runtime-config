@@ -1,4 +1,13 @@
-import type { Binding, FeatureKey, Features, MacroStep, OpResult, State } from "./types";
+import type {
+  Binding,
+  FeatureKey,
+  Features,
+  LayerGroup,
+  MacroStep,
+  OpResult,
+  State,
+  UiMeta,
+} from "./types";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -105,3 +114,12 @@ export const trackballSet = (id: number, field: string, value: number | boolean 
 
 export const trackballReset = (id: number) =>
   call<OpResult>("POST", "/api/trackball/reset", { id });
+
+// ---- layer groups ---------------------------------------------------------
+
+export const getUiMeta = () => call<UiMeta>("GET", "/api/ui-meta");
+
+/** Saves the whole document; the server answers with what it stored (ids
+ *  slugged from the names), which is what the caller should keep. */
+export const putUiMeta = (meta: { groups: LayerGroup[] }) =>
+  call<UiMeta>("POST", "/api/ui-meta", { groups: meta.groups });
