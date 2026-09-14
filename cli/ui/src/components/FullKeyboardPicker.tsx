@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FULL_KEYBOARD, SHIFT_CODES, type FullKey } from "../fullKeyboard";
 import { keycodeHelp } from "../help";
+import { pretty } from "../prettyKeycode";
 import { splitMods } from "../params";
 import AllKeysSection from "./AllKeysSection";
 
@@ -147,6 +148,18 @@ export default function FullKeyboardPicker({
   // now, and reopening the board to a shifted face nobody asked for is worse
   // than one extra click.
   const [shift, setShift] = useState(false);
+  /** Shortest name for the current value (whole value first, then its base). */
+  const currentName = (() => {
+    const byValue = (v: number) =>
+      Object.keys(keycodes)
+        .filter((n) => keycodes[n] === v)
+        .sort((a, b) => a.length - b.length || (a < b ? -1 : 1))[0];
+    const whole = byValue(value);
+    if (whole) return whole;
+    const { base, mods } = splitMods(value);
+    const b = byValue(base);
+    return b ? mods.reduceRight((t, m) => `${m}(${t})`, b) : undefined;
+  })();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -189,6 +202,15 @@ export default function FullKeyboardPicker({
           <span className="text-[11px] text-zinc-500">
             押したキーがキーコードになります (修飾トグルはそのまま)
           </span>
+          {currentName && (
+            <span
+              className="ml-2 inline-flex items-center gap-1.5 rounded-md border border-sky-700/60 bg-sky-500/10 px-2 py-0.5 text-[11px] text-sky-100"
+              title="いま押されたことにするキー"
+            >
+              現在 <span className="text-sm font-semibold">{pretty(currentName)}</span>
+              <span className="font-mono text-[10px] text-sky-300/80">{currentName}</span>
+            </span>
+          )}
           <button
             type="button"
             onClick={() => setShift((v) => !v)}

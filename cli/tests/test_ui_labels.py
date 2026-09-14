@@ -1,6 +1,7 @@
 from zmk_runtime_cli.ui import labels as L
 
-REV = {0x70004: "A", 0x7002B: "TAB", 0x7001D: "Z", 0xC00E9: "C_VOL_UP", 0x700E0: "LCTRL"}
+REV = {0x70004: "A", 0x7002B: "TAB", 0x7001D: "Z", 0xC00E9: "C_VOL_UP", 0x700E0: "LCTRL",
+       0x7002E: "EQL", (0x02 << 24) | 0x7002E: "PLUS"}
 LAYERS = {0: "DEFAULT", 4: "NUM", 8: "SETTING"}
 HID = [{"name": "Key", "type": "hid_usage", "keyboard_max": 255, "consumer_max": 1024}]
 LAYER = [{"name": "Layer", "type": "layer_id"}]
@@ -20,6 +21,11 @@ def test_keycode_text_plain_and_modified_and_unknown():
     assert L.keycode_text((0x08 << 24) | 0x7002B, REV) == "LG(TAB)"
     assert L.keycode_text((0x01 << 24) | (0x02 << 24) | 0x7001D, REV) == "LC(LS(Z))"
     assert L.keycode_text(0x70099, REV) == "0x70099"
+
+
+def test_keycode_text_prefers_the_symbol_name_over_shift_plus_base():
+    # PLUS is defined as LS(EQL); the keymap author wrote PLUS, so show PLUS.
+    assert L.keycode_text((0x02 << 24) | 0x7002E, REV) == "PLUS"
 
 
 def test_key_press():

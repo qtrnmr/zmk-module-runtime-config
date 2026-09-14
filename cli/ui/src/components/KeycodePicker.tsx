@@ -104,7 +104,8 @@ export default function KeycodePicker({
   const [board, setBoard] = useState(false);
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLUListElement>(null);
-  const { base, mods } = splitMods(value);
+  const own = splitMods(value);
+  const base = own.base;
 
   const names = useMemo(() => Object.keys(keycodes).sort(), [keycodes]);
   const hits = useMemo(() => searchKeycodes(names, q), [names, q]);
@@ -129,20 +130,23 @@ export default function KeycodePicker({
   const nameFor = (v: number) =>
     names.filter((n) => keycodes[n] === v).sort((a, b) => a.length - b.length || (a < b ? -1 : 1))[0];
 
+  // A shifted symbol has a name of its own for the whole value, modifier bit
+  // included: PLUS *is* LS(EQL). Then the Shift belongs to the symbol, not to
+  // the user, so the toggles stay dark and the value reads as `+`.
+  const whole = nameFor(value);
+  const mods: ModName[] = whole ? [] : own.mods;
+
   const canonical = useMemo(() => {
-    // A shifted symbol has a name of its own for the whole value, modifier bit
-    // included — and that is the name the board will show for this binding, so
-    // say `PLUS` rather than spelling it out as `LS(EQL)`.
-    const whole = nameFor(value);
     if (whole) return whole;
     const baseName = nameFor(base) ?? `0x${base.toString(16).toUpperCase()}`;
     return mods.reduceRight((t, m) => `${m}(${t})`, baseName);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [names, keycodes, value, base, mods]);
+  }, [names, keycodes, value, base, mods, whole]);
 
   const toggle = (m: ModName) => {
     const next = mods.includes(m) ? mods.filter((x) => x !== m) : [...mods, m];
-    onChange(joinMods(base, next));
+    // Keep a symbol's own modifier (the LS in PLUS) underneath the toggles.
+    onChange(joinMods(base, [...new Set([...(whole ? own.mods : []), ...next])]));
   };
 
   const pick = (n: string) => {

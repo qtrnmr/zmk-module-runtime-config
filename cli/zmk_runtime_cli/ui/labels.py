@@ -9,6 +9,10 @@ _WELL_KNOWN = {"transparent": "▽", "none": "∅"}
 
 
 def keycode_text(value: int, rev: dict[int, str]) -> str:
+    # A shifted symbol has a name for the whole value, modifier bit included:
+    # PLUS *is* LS(EQL). Say PLUS, which is what the user typed in the keymap.
+    if value in rev:
+        return rev[value]
     base = value & 0x00FFFFFF
     text = rev.get(base, f"0x{base:X}")
     for mod in reversed(MOD_ORDER):  # innermost wrap first -> LC(LS(Z)) reads outer->inner
