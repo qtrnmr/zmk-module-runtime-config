@@ -249,6 +249,7 @@ export default function App() {
                 onGroups={(g) => void saveGroups(g)}
                 entryHidden={entryHidden}
                 onShowEntry={() => setEntryHidden(false)}
+                activators={activators}
               />
               {selection === null && (
                 <ComboList

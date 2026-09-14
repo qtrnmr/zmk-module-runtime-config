@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { layerActivators } from "./activators";
+import { groupKeyActivators, layerActivators } from "./activators";
 import { decorFor } from "./decor";
 import type { Behavior, Binding, Features, Layer, State } from "./types";
 
@@ -213,6 +213,16 @@ describe("layerActivators", () => {
   it("works on /api/state alone, before the features arrive", () => {
     expect(layerActivators(STATE, null, DECOR, 9)).toEqual([]);
     expect(layerActivators(STATE, null, DECOR, 8)).toHaveLength(4);
+  });
+
+  it("collapses one key on three layers into one thing to press", () => {
+    const acts = layerActivators(STATE, features(), DECOR, 8);
+    expect(groupKeyActivators(acts)).toEqual([
+      { pos: 27, how: "hold", on: [0] },
+      { pos: 37, how: "hold", on: [0, 1, 2] },
+    ]);
+    // Nothing key-shaped survives the grouping of a conditional layer.
+    expect(groupKeyActivators(layerActivators(STATE, features(), DECOR, 9))).toEqual([]);
   });
 
   it("says the base layer is simply where the keyboard starts", () => {

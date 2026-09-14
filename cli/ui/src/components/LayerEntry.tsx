@@ -1,30 +1,8 @@
 import { useMemo } from "react";
-import { HOW_JA, type Activator, type ActivatorHow, type KeyActivator } from "../activators";
-import { pretty } from "../prettyKeycode";
-import type { Label, Layer } from "../types";
+import { HOW_JA, groupKeyActivators, type Activator, type KeyActivator } from "../activators";
+import { capText } from "../board";
+import type { Layer } from "../types";
 import { layerLabel } from "../types";
-
-/** What the cap says when you are not on a layer that changes it: the base
- *  layer's tap label, which is the word printed on the physical key. */
-function capText(label: Label | undefined): string {
-  if (!label) return "?";
-  return pretty("text" in label ? label.text : label.tap);
-}
-
-/** One chip per (position, gesture): the same thumb key is an activator on
- *  DEFAULT, APPLE and ANDROID at once, and that is one key to press, not
- *  three. The layers it works from go in the brackets. */
-function keyChips(activators: Activator[]): { pos: number; how: ActivatorHow; on: number[] }[] {
-  const by = new Map<string, { pos: number; how: ActivatorHow; on: number[] }>();
-  for (const a of activators) {
-    if (a.kind !== "key") continue;
-    const k = `${a.pos}:${a.how}`;
-    const hit = by.get(k);
-    if (hit) hit.on.push(a.layer);
-    else by.set(k, { pos: a.pos, how: a.how, on: [a.layer] });
-  }
-  return [...by.values()];
-}
 
 const CHIP =
   "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-4";
@@ -61,7 +39,7 @@ export default function LayerEntry({
     const l = layers.find((x) => x.index === index);
     return l ? layerLabel(l) : `L${index}`;
   };
-  const keys = useMemo(() => keyChips(activators), [activators]);
+  const keys = useMemo(() => groupKeyActivators(activators), [activators]);
   const rest = activators.filter((a): a is Exclude<Activator, KeyActivator> => a.kind !== "key");
 
   return (

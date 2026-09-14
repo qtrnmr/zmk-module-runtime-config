@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import {
+  BASE_LAYER_NOTE,
+  HOW_JA,
+  groupKeyActivators,
+  type Activator,
+} from "../activators";
+import { capText } from "../board";
 import { groupLayers, moveLayer, nextColor } from "../groups";
 import type { GroupColor, Layer, LayerGroup } from "../types";
 import { GROUP_COLORS, PICKABLE_COLORS, layerLabel } from "../types";
 import ConfirmDialog from "./ConfirmDialog";
+import { useTooltip } from "./Tooltip";
 
 export interface RemovedLayer {
   id: number;
@@ -94,6 +102,7 @@ export default function LayerChips({
   onGroups,
   entryHidden,
   onShowEntry,
+  activators,
 }: {
   layers: Layer[];
   current: number;
@@ -118,6 +127,8 @@ export default function LayerChips({
    *  the card carries the only way back to it. */
   entryHidden?: boolean;
   onShowEntry?(): void;
+  /** Every way into every layer, keyed by layer index (see layerActivators). */
+  activators?: Map<number, Activator[]>;
 }) {
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
@@ -131,6 +142,7 @@ export default function LayerChips({
   const [creating, setCreating] = useState(false);
   const [shut, setShut] = useState<Set<string>>(readCollapsed);
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(SUGGEST_KEY) === "1");
+  const tip = useTooltip();
 
   useEffect(() => {
     localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...shut]));
@@ -176,8 +188,58 @@ export default function LayerChips({
   for (const s of sections)
     for (const l of s.layers) colorByLayer.set(l.id, s.group?.color ?? "zinc");
 
+  const base = layers[0];
+  const layerName = (index: number) => {
+    const l = layers.find((x) => x.index === index);
+    return l ? layerLabel(l) : `L${index}`;
+  };
+
+  /** One character per kind of way in, so a row says at a glance whether it is
+   *  a key you hold, a combination of other layers, or the pointer that takes
+   *  you here. `押` covers every key — most of the roBa's layers are entered by
+   *  holding one, and the ones you tap into (the three OS layers) would
+   *  otherwise be the only rows with no mark at all; the tooltip names the
+   *  gesture exactly. */
+  const marksFor = (index: number): string[] => {
+    const acts = activators?.get(index) ?? [];
+    const marks: string[] = [];
+    if (acts.some((a) => a.kind === "key")) marks.push("押");
+    if (acts.some((a) => a.kind === "condlayer")) marks.push("条");
+    if (
+      acts.some(
+        (a) => a.kind === "trackball" || (a.kind === "note" && a.text !== BASE_LAYER_NOTE),
+      )
+    )
+      marks.push("TB");
+    return marks;
+  };
+
+  const entryTip = (l: Layer) => {
+    const acts = activators?.get(l.index) ?? [];
+    return (
+      <>
+        <p className="font-medium text-zinc-100">{layerLabel(l)} へ入るには</p>
+        {groupKeyActivators(acts).map((k) => (
+          <p key={`${k.pos}:${k.how}`} className="text-zinc-300">
+            {capText(base?.bindings[k.pos]?.label)} を{HOW_JA[k.how]} ({k.on.map(layerName).join(" · ")})
+          </p>
+        ))}
+        {acts
+          .filter((a) => a.kind !== "key")
+          .map((a, i) => (
+            <p key={i} className="text-zinc-400">
+              {a.kind === "condlayer"
+                ? `${a.ifLayers.map(layerName).join(" + ")} が同時に有効なとき自動`
+                : a.text}
+            </p>
+          ))}
+      </>
+    );
+  };
+
   const layerRow = (l: Layer) => {
     const c = GROUP_COLORS[colorByLayer.get(l.id) ?? "zinc"];
+    const marks = marksFor(l.index);
     return (
       <li
         key={l.id}
@@ -243,6 +305,19 @@ export default function LayerChips({
             </span>
             {!collapsed && <span className="truncate">{layerLabel(l)}</span>}
           </button>
+        )}
+        {!collapsed && !!marks.length && (
+          <span
+            onMouseEnter={(e) => tip.show(e, entryTip(l))}
+            onMouseMove={(e) => tip.show(e, entryTip(l))}
+            onMouseLeave={tip.hide}
+            className={
+              "shrink-0 cursor-help px-1 font-mono text-[10px] leading-none " +
+              (l.index === current ? "text-sky-100/70" : "text-zinc-600")
+            }
+          >
+            {marks.join("")}
+          </span>
         )}
         {!collapsed && (
           <button
@@ -561,6 +636,8 @@ export default function LayerChips({
           )}
         </MenuSheet>
       )}
+
+      {tip.node}
 
       <ConfirmDialog
         open={confirmIdx !== null}

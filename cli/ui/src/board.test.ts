@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toBoxes, UNIT } from "./geometry";
-import { activeCombos, COMBO_COLORS, comboColor, comboPath, holdtapSlotFor, keyCenter, ribbonPath } from "./board";
+import { activeCombos, capText, COMBO_COLORS, comboColor, comboPath, holdtapSlotFor, keyCenter, ribbonPath } from "./board";
 import type { ComboEntry, HoldtapSlot } from "./types";
 
 const boxes = toBoxes([
@@ -13,6 +13,15 @@ const combo = (index: number, key_positions: number[], layers: number[]): ComboE
   index, key_positions, layers, timeout_ms: 50, require_prior_idle_ms: -1, slow_release: false,
   found: true, binding: { behavior_id: 0, param1: 0, param2: 0 }, dt_binding: null,
   effective: { behavior_id: 8, param1: 41, param2: 0, label: { text: "ESC", behavior: "Key Press" } },
+});
+
+describe("capText", () => {
+  it("is the tap side of a hold-tap, which is what the cap is printed with", () => {
+    expect(capText({ behavior: "Layer-Tap", hold: "SETTING", tap: "LANGUAGE_2" })).toBe("英数");
+    expect(capText({ behavior: "Key Press", text: "SPACE" })).toBe("␣");
+    expect(capText(undefined)).toBe("?");
+    expect(capText(undefined, "—")).toBe("—");
+  });
 });
 
 describe("keyCenter", () => {

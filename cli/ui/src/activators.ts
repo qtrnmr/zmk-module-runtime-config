@@ -37,6 +37,9 @@ export const HOW_JA: Record<ActivatorHow, string> = {
   sticky: "スティッキー",
 };
 
+/** What the base layer is told when nothing has to be pressed to be there. */
+export const BASE_LAYER_NOTE = "起動時のレイヤー";
+
 /** Behaviours whose gesture is not the default hold. `Mod-Tap` is listed as
  *  `null` on purpose: both of its parameters are keycodes, so it can never
  *  name a layer, and saying so here keeps the exclusion visible. */
@@ -129,6 +132,23 @@ export function layerActivators(
   const all = [...keys, ...rest];
   // The base layer is where the keyboard wakes up: nothing has to be pressed,
   // and an empty list would read as "unreachable" rather than "always on".
-  if (!all.length && target === 0) return [{ kind: "note", text: "起動時のレイヤー" }];
+  if (!all.length && target === 0) return [{ kind: "note", text: BASE_LAYER_NOTE }];
   return all;
+}
+
+/** One entry per (position, gesture), with the layers it works from — the same
+ *  thumb key is an activator on DEFAULT, APPLE and ANDROID at once, and that is
+ *  one key to press, not three. Order follows layerActivators(). */
+export function groupKeyActivators(
+  activators: Activator[],
+): { pos: number; how: ActivatorHow; on: number[] }[] {
+  const by = new Map<string, { pos: number; how: ActivatorHow; on: number[] }>();
+  for (const a of activators) {
+    if (a.kind !== "key") continue;
+    const k = `${a.pos}:${a.how}`;
+    const hit = by.get(k);
+    if (hit) hit.on.push(a.layer);
+    else by.set(k, { pos: a.pos, how: a.how, on: [a.layer] });
+  }
+  return [...by.values()];
 }

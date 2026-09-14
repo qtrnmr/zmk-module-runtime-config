@@ -8,6 +8,13 @@ export function labelText(label: Label | undefined, fallback = "—"): string {
   return "text" in label ? pretty(label.text) : `${pretty(label.hold)}/${pretty(label.tap)}`;
 }
 
+/** What is printed on the key itself: a hold-tap cap is known by its tap side,
+ *  which is the legend your finger looks for (`英数`, not `SETTING/英数`). */
+export function capText(label: Label | undefined, fallback = "?"): string {
+  if (!label) return fallback;
+  return pretty("text" in label ? label.text : label.tap);
+}
+
 /** Centre of a cap after its rotation (matches the SVG `rotate(deg cx cy)`). */
 export function keyCenter(b: KeyBox): [number, number] {
   const px = b.x + b.w / 2;
