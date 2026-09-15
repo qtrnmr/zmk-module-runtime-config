@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { KEYCODE_HELP, behaviorJa } from "../help";
 import { MOD_WRAP, PRETTY_MAP } from "../prettyKeycode";
-import { TAG } from "./Keyboard";
+import { TAG, TAG_ALIAS } from "./Keyboard";
 
 /** One line of the 記号 table: what is drawn, what it stands for, what it does. */
 export interface SymbolRow {
@@ -51,9 +51,14 @@ export const MOD_SYMBOL_ROWS: SymbolRow[] = (() => {
 })();
 
 /** The blue abbreviation in a cap's bottom-right corner. */
-export const TAG_ROWS: { tag: string; behavior: string; ja: string }[] = Object.entries(TAG).map(
-  ([behavior, tag]) => ({ tag, behavior, ja: behaviorJa(behavior) }),
-);
+export const TAG_ROWS: { tag: string; behavior: string; ja: string }[] = (() => {
+  const seen = new Set<string>();
+  // TAG first, so an abbreviation is explained by the generic behaviour; a
+  // keyboard's own behaviour (TAG_ALIAS) only adds a row for a tag TAG lacks.
+  return [...Object.entries(TAG), ...Object.entries(TAG_ALIAS)]
+    .filter(([, tag]) => !seen.has(tag) && seen.add(tag))
+    .map(([behavior, tag]) => ({ tag, behavior, ja: behaviorJa(behavior) }));
+})();
 
 /** Marks that are not keycodes and not behaviour tags. */
 export const MARK_ROWS: { mark: string; text: string }[] = [

@@ -50,6 +50,24 @@ export const TAG: Record<string, string> = {
   Bootloader: "BOOT",
 };
 
+/** A keyboard's own behaviours reuse the abbreviation of the thing they are:
+ *  roBa's LAYER_TAP_TO_0 is a layer-tap, so the cap says LT, not `LAYER…`.
+ *  Only the tag is shared — the tooltip and the inspector still say which one. */
+export const TAG_ALIAS: Record<string, string> = {
+  LAYER_TAP_TO_0: "LT",
+  LAYER_TAP_TO_APPLE: "LT",
+  LAYER_TAP_TO_ANDROID: "LT",
+  TO_LAYER_0: "TO",
+  TO_APPLE_DEFAULT: "TO",
+  TO_ANDROID: "TO",
+  BT_H_FOLD: "BT",
+  BT_J_MAC: "BT",
+  BT_K_WIN: "BT",
+  rt_macro: "MCR",
+  mouse_move: "MV",
+  mouse_scroll: "SCR",
+};
+
 /** The gestures at one position, each with the layers it works from — the
  *  same thumb key is usually an activator on DEFAULT, APPLE and ANDROID at
  *  once, and that reads as one line, not three. */
@@ -69,9 +87,9 @@ function layerName(layers: Layer[], index: number): string {
 
 function tag(behavior: string): string {
   if (PLAIN.has(behavior)) return "";
-  const known = TAG[behavior];
+  const known = TAG[behavior] ?? TAG_ALIAS[behavior];
   if (known) return known;
-  return behavior.length <= 6 ? behavior : behavior.slice(0, 5) + "…";
+  return behavior.length <= 4 ? behavior : behavior.slice(0, 3) + "…";
 }
 
 /** Font size that keeps a label inside a ~54px cap: 16px up to 4 chars,
@@ -81,6 +99,22 @@ function fit(text: string): string {
   if (text.length <= 6) return "text-[13px]";
   if (text.length <= 8) return "text-[11px]";
   return "text-[9px]";
+}
+
+/** Same, one step down: a hold/tap cap carries two lines plus a tag, so the
+ *  tap line cannot use the full height a single-line cap can. */
+function fitTap(text: string): string {
+  if (text.length <= 3) return "text-[15px]";
+  if (text.length <= 5) return "text-[12px]";
+  if (text.length <= 8) return "text-[10px]";
+  return "text-[8px]";
+}
+
+/** The small line above the tap label (the hold action). */
+function fitHold(text: string): string {
+  if (text.length <= 6) return "text-[10px]";
+  if (text.length <= 9) return "text-[8px]";
+  return "text-[7px]";
 }
 
 function KeyLabel({ label, dim }: { label: Label; dim?: boolean }) {
@@ -98,16 +132,16 @@ function KeyLabel({ label, dim }: { label: Label; dim?: boolean }) {
       <text
         textAnchor="middle"
         dominantBaseline="central"
-        y={-17}
-        className="fill-zinc-400 text-[10px]"
+        y={-18}
+        className={`fill-zinc-400 ${fitHold(pretty(label.hold))}`}
       >
         {pretty(label.hold)}
       </text>
       <text
         textAnchor="middle"
         dominantBaseline="central"
-        y={6}
-        className={`${cls} ${fit(pretty(label.tap))}`}
+        y={2}
+        className={`${cls} ${fitTap(pretty(label.tap))}`}
       >
         {pretty(label.tap)}
       </text>
@@ -476,9 +510,12 @@ export default function Keyboard({
               {sensor === undefined && tag(label.behavior) && (
                 <text
                   x={b.x + b.w - G - 4}
-                  y={b.y + b.h - G - 4}
+                  y={b.y + b.h - G - 3}
                   textAnchor="end"
-                  className="fill-sky-500/70 text-[8px]"
+                  className={
+                    "fill-sky-500/70 " +
+                    (tag(label.behavior).length > 3 ? "text-[7px]" : "text-[8px]")
+                  }
                 >
                   {tag(label.behavior)}
                 </text>

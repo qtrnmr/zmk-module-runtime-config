@@ -6,7 +6,7 @@ import {
   MOD_SYMBOL_ROWS,
   TAG_ROWS,
 } from "./components/Legend";
-import { TAG } from "./components/Keyboard";
+import { TAG, TAG_ALIAS } from "./components/Keyboard";
 import { MOD_WRAP, PRETTY_MAP, pretty } from "./prettyKeycode";
 
 describe("the legend explains everything the board can draw", () => {
@@ -40,5 +40,26 @@ describe("the legend explains everything the board can draw", () => {
     expect(marks).toContain("∅");
     expect(BOARD_ROWS.length).toBeGreaterThan(0);
     for (const r of [...MARK_ROWS, ...BOARD_ROWS]) expect(r.text.length).toBeGreaterThan(0);
+  });
+});
+
+describe("cap tags stay short", () => {
+  it("never draws a tag wider than four characters", () => {
+    for (const [name, t] of [...Object.entries(TAG), ...Object.entries(TAG_ALIAS)]) {
+      expect(t.length, name).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it("gives a keyboard's own hold-tap the generic abbreviation", () => {
+    expect(TAG_ALIAS.LAYER_TAP_TO_0).toBe("LT");
+    expect(TAG_ALIAS.TO_APPLE_DEFAULT).toBe("TO");
+    expect(TAG_ALIAS.BT_J_MAC).toBe("BT");
+  });
+
+  it("explains every abbreviation exactly once", () => {
+    const tags = TAG_ROWS.map((r) => r.tag);
+    expect(new Set(tags).size).toBe(tags.length);
+    const all = new Set([...Object.values(TAG), ...Object.values(TAG_ALIAS)]);
+    expect([...all].filter((t) => !tags.includes(t))).toEqual([]);
   });
 });
