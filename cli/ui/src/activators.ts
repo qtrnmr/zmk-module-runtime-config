@@ -152,3 +152,36 @@ export function groupKeyActivators(
   }
   return [...by.values()];
 }
+
+/** One row of the layer-switch list: a key, the gesture, and where it takes
+ *  you — gathered across *every* layer, not just the one on screen. The board
+ *  only marks the keys that reach the layer you are looking at, so a chord like
+ *  SETTING+J (which reaches APPLE) is invisible until you select APPLE; this is
+ *  the view that shows all of them at once. */
+export interface LayerKeyRow {
+  pos: number;
+  how: ActivatorHow;
+  /** Layer index this key takes you to. */
+  target: number;
+  /** Layers the key has this effect on. */
+  on: number[];
+  behavior: string;
+}
+
+export function layerKeyRows(byTarget: Map<number, Activator[]>): LayerKeyRow[] {
+  const rows: LayerKeyRow[] = [];
+  for (const [target, acts] of byTarget) {
+    for (const g of groupKeyActivators(acts)) {
+      const behavior = acts.find(
+        (a): a is KeyActivator => a.kind === "key" && a.pos === g.pos && a.how === g.how,
+      )?.behavior;
+      rows.push({ pos: g.pos, how: g.how, target, on: g.on, behavior: behavior ?? "" });
+    }
+  }
+  // Reading order: where your hands are (position), then what you do with it.
+  const HOW_ORDER: ActivatorHow[] = ["hold", "tap", "toggle", "sticky"];
+  return rows.sort(
+    (a, b) =>
+      a.pos - b.pos || HOW_ORDER.indexOf(a.how) - HOW_ORDER.indexOf(b.how) || a.target - b.target,
+  );
+}

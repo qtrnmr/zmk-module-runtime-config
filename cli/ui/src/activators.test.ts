@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupKeyActivators, layerActivators } from "./activators";
+import { groupKeyActivators, layerActivators, layerKeyRows, type Activator } from "./activators";
 import { decorFor } from "./decor";
 import type { Behavior, Binding, Features, Layer, State } from "./types";
 
@@ -234,5 +234,35 @@ describe("layerActivators", () => {
       { kind: "note", text: "起動時のレイヤー" },
     ]);
     expect(layerActivators(bare, features(), DECOR, 1)).toEqual([]);
+  });
+});
+
+describe("layerKeyRows", () => {
+  it("lists a key once per destination, across every layer", () => {
+    const byTarget = new Map<number, Activator[]>([
+      [
+        8,
+        [
+          { kind: "key", layer: 0, pos: 37, how: "hold", behavior: "LAYER_TAP_TO_0" },
+          { kind: "key", layer: 1, pos: 37, how: "hold", behavior: "LAYER_TAP_TO_APPLE" },
+        ],
+      ],
+      [
+        1,
+        [{ kind: "key", layer: 8, pos: 18, how: "tap", behavior: "BT_J_MAC" }],
+      ],
+    ]);
+    const rows = layerKeyRows(byTarget);
+    expect(rows).toEqual([
+      { pos: 18, how: "tap", target: 1, on: [8], behavior: "BT_J_MAC" },
+      { pos: 37, how: "hold", target: 8, on: [0, 1], behavior: "LAYER_TAP_TO_0" },
+    ]);
+  });
+
+  it("drops everything that is not a key", () => {
+    const byTarget = new Map<number, Activator[]>([
+      [9, [{ kind: "condlayer", ifLayers: [1, 6] }, { kind: "note", text: "x" }]],
+    ]);
+    expect(layerKeyRows(byTarget)).toEqual([]);
   });
 });

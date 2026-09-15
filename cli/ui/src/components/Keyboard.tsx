@@ -182,6 +182,7 @@ export default function Keyboard({
   onHoverCombo,
   onTrackball,
   activators,
+  markPos,
   pressed,
   behaviors,
   keycodes,
@@ -203,6 +204,8 @@ export default function Keyboard({
   onTrackball(): void;
   /** Every way into the layer being shown; only the key-shaped ones are drawn. */
   activators: Activator[];
+  /** One position to ring in violet: the layer-switch list points here. */
+  markPos?: number | null;
   /** Key positions the firmware says are down right now (練習モード). */
   pressed?: Set<number>;
   /** Only for the hover tooltip: what a behaviour id and its params mean. */
@@ -474,6 +477,19 @@ export default function Keyboard({
                     ↺ {labelText(lb?.ccw.label, "—")}
                   </text>
                 </g>
+              )}
+              {markPos === b.pos && (
+                <rect
+                  x={b.x + G - 2}
+                  y={b.y + G - 2}
+                  width={b.w - 2 * G + 4}
+                  height={b.h - 2 * G + 4}
+                  rx={9}
+                  fill="none"
+                  className="stroke-violet-300"
+                  strokeWidth={2.5}
+                  pointerEvents="none"
+                />
               )}
               {acts.length > 0 && (
                 // Deliberately not the selection's frame: this key is not the

@@ -27,6 +27,7 @@ import Inspector from "./components/Inspector";
 import Keyboard from "./components/Keyboard";
 import LayerChips, { type RemovedLayer } from "./components/LayerChips";
 import LayerEntry from "./components/LayerEntry";
+import LayerKeyList from "./components/LayerKeyList";
 import PracticeStrip from "./components/PracticeStrip";
 import Rail from "./components/Rail";
 import Toast from "./components/Toast";
@@ -56,6 +57,8 @@ export default function App() {
     () => localStorage.getItem(SHOW_COMBOS_KEY) !== "0",
   );
   const [hoverCombo, setHoverCombo] = useState<number | null>(null);
+  /** Position the layer-switch list is pointing at, ringed on the board. */
+  const [hoverKey, setHoverKey] = useState<number | null>(null);
   /** The "how do I get here" banner above the board, dismissible for good. */
   const [entryHidden, setEntryHidden] = useState(
     () => localStorage.getItem(ENTRY_HIDDEN_KEY) === "1",
@@ -348,6 +351,7 @@ export default function App() {
                 activators={activators}
               />
               {selection === null && (
+                <>
                 <ComboList
                   combos={features?.combos ?? null}
                   layers={state.keymap.layers}
@@ -360,6 +364,19 @@ export default function App() {
                   showCombos={showCombos}
                   onToggleCombos={setShowCombos}
                 />
+                <LayerKeyList
+                  byTarget={activators}
+                  layers={state.keymap.layers}
+                  base={state.keymap.layers[0]}
+                  currentLayer={layer.index}
+                  hover={hoverKey}
+                  onHover={setHoverKey}
+                  onGo={(index, pos) => {
+                    setLayerIdx(index);
+                    setSelection({ kind: "key", pos });
+                  }}
+                />
+                </>
               )}
             </div>
             <div className="flex min-h-0 flex-col">
@@ -401,6 +418,7 @@ export default function App() {
                   onHoverCombo={setHoverCombo}
                   onTrackball={() => changeTab("trackball")}
                   pressed={practice?.pressed}
+                  markPos={hoverKey}
                 />
               </div>
             </div>
