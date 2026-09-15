@@ -488,9 +488,11 @@ export default function Keyboard({
                     rx={1.5}
                     className="fill-violet-400"
                   />
+                  {/* Bottom-left, not under the bar: the top of a cap already
+                      carries the hold label (and the ▽ of a transparent key). */}
                   <text
-                    x={b.x + G + (transparent ? 13 : 4)}
-                    y={b.y + G + 14}
+                    x={b.x + G + 4}
+                    y={b.y + b.h - G - 3}
                     className="fill-violet-300 text-[8px]"
                   >
                     {howGroups(acts)
