@@ -265,7 +265,7 @@ export default function App() {
   };
 
   return (
-    <div className="grid h-screen grid-cols-[56px_1fr_auto] bg-zinc-950 text-zinc-100">
+    <div className="grid h-screen grid-cols-[56px_minmax(0,1fr)_auto] overflow-hidden bg-zinc-950 text-zinc-100">
       <Rail
         tab={tab}
         onTab={changeTab}
@@ -283,7 +283,7 @@ export default function App() {
         busy={busy}
       />
 
-      <div className="grid min-w-0 grid-rows-[auto_auto_1fr]">
+      <div className="grid min-w-0 grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden">
         <TopBar
           state={state}
           busy={busy}
@@ -293,7 +293,7 @@ export default function App() {
           onPractice={() => (practice ? stopPractice() : startPractice())}
         />
         {/* One grid row, however many banners: the row count is fixed. */}
-        <div>
+        <div className="min-w-0 overflow-hidden">
           {locked && (
             <div className="bg-amber-500/20 px-4 py-2 text-sm text-amber-200">
               デバイスが LOCKED です。SETTING 層の &amp;studio_unlock を押して unlock してください。
@@ -310,10 +310,10 @@ export default function App() {
         </div>
 
         {tab === "keymap" ? (
-          <div className="grid min-h-0 grid-cols-[auto_1fr]">
+          <div className="grid min-h-0 grid-cols-[auto_minmax(0,1fr)]">
             {/* The layer card and the combo list share one column; both give
                 the width back to the board while the inspector is open. */}
-            <div className="flex min-h-0 flex-col">
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
               <LayerChips
                 layers={state.keymap.layers}
                 current={layer.index}
@@ -377,7 +377,7 @@ export default function App() {
                   onHide={() => setEntryHidden(true)}
                 />
               )}
-              <div className="relative min-h-0 flex-1">
+              <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
                 <Keyboard
                   layout={state.layout}
                   layer={layer}

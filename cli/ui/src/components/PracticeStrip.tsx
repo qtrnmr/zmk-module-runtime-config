@@ -34,15 +34,15 @@ export default function PracticeStrip({
   }, [practice.log]);
 
   return (
-    <div className="flex items-center gap-x-4 border-b border-emerald-700/40 bg-emerald-950/30 px-4 py-1.5 text-xs">
+    <div className="flex min-w-0 items-center gap-x-4 overflow-hidden border-b border-emerald-700/40 bg-emerald-950/30 px-4 py-1.5 text-xs">
       <span className="flex shrink-0 items-center gap-1.5 font-medium text-emerald-300">
         <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
         練習モード
       </span>
 
       {/* left: what is being sent right now */}
-      <div className="flex min-w-0 shrink-0 items-center gap-1.5">
-        <span className="text-zinc-500">出力:</span>
+      <div className="flex min-w-0 max-w-[40%] items-center gap-1.5 overflow-hidden">
+        <span className="shrink-0 text-zinc-500">出力:</span>
         {chips.length === 0 ? (
           <span className="text-zinc-600">—</span>
         ) : (
@@ -64,8 +64,8 @@ export default function PracticeStrip({
       </div>
 
       {/* middle: the layers the firmware says are on */}
-      <div className="flex min-w-0 shrink-0 items-center gap-1.5">
-        <span className="text-zinc-500">レイヤー:</span>
+      <div className="flex min-w-0 max-w-[30%] items-center gap-1.5 overflow-hidden">
+        <span className="shrink-0 text-zinc-500">レイヤー:</span>
         {names.length === 0 ? (
           <span className="text-zinc-600">—</span>
         ) : (
